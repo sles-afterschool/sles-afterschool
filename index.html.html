@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+<title>臺北市雙蓮國小・社團報名系統｜115學年度上學期</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+/* ═══════════════════════════════════════════════════
+   Design tokens
+   ═══════════════════════════════════════════════════ */
+:root{
+  --primary:#1a5fa8;
+  --primary-dark:#134777;
+  --primary-soft:#e8f0fb;
+  --primary-tint:#f3f7fc;
+  --accent:#e05c2a;
+  --accent-soft:#fce5cd;
+  --success:#1e8a5e;
+  --success-soft:#e0f2e9;
+  --purple:#7c5dc8;
+  --purple-soft:#ece6f8;
+  --warn:#c97a1a;
+  --warn-soft:#fff4e0;
+  --danger:#c0392b;
+  --ink:#1f2937;
+  --ink-soft:#4b5563;
+  --ink-mute:#6b7280;
+  --line:#e5e7eb;
+  --line-soft:#f1f3f5;
+  --bg:#f7f9fc;
+  --card:#ffffff;
+  --shadow-sm:0 1px 2px rgba(15,23,42,.04), 0 1px 1px rgba(15,23,42,.03);
+  --shadow:0 4px 16px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+  --shadow-lg:0 18px 48px rgba(15,23,42,.12), 0 4px 12px rgba(15,23,42,.06);
+  --r-sm:8px; --r:12px; --r-lg:16px; --r-xl:22px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  color:var(--ink);
+  background:var(--bg);
+  font-size:15px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit; cursor:pointer; border:none; background:none}
+input,select,textarea{font-family:inherit; font-size:inherit}
+a{color:inherit; text-decoration:none}
+
+/* ═══════════════════════════════════════════════════
+   Layout shells
+   ═══════════════════════════════════════════════════ */
+.app{min-height:100vh; display:flex; flex-direction:column}
+.topbar{
+  background:#fff; border-bottom:1px solid var(--line);
+  padding:14px 24px;
+  display:flex; align-items:center; gap:16px;
+  position:sticky; top:0; z-index:50;
+}
+.topbar .crest{
+  width:42px; height:42px; border-radius:10px;
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff; display:grid; place-items:center;
+  font-weight:900; font-size:18px;
+  box-shadow:0 4px 10px rgba(26,95,168,.25);
+}
+.topbar .school{display:flex; flex-direction:column; line-height:1.25}
+.topbar .school .name{font-weight:700; font-size:16px}
+.topbar .school .sys{font-size:12px; color:var(--ink-mute)}
+.topbar nav{margin-left:auto; display:flex; gap:8px; align-items:center}
+.topbar nav button{
+  padding:8px 14px; border-radius:8px; font-size:14px; color:var(--ink-soft);
+  font-weight:500;
+}
+.topbar nav button:hover{background:var(--primary-soft); color:var(--primary)}
+.topbar nav button.active{background:var(--primary); color:#fff}
+.topbar nav .gear{
+  width:34px; height:34px; border-radius:8px; display:grid; place-items:center;
+  color:var(--ink-mute);
+}
+.topbar nav .gear:hover{background:var(--line-soft); color:var(--primary)}
+
+.container{max-width:1180px; margin:0 auto; padding:28px 24px 80px; width:100%}
+
+/* ═══════════════════════════════════════════════════
+   Buttons
+   ═══════════════════════════════════════════════════ */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  padding:11px 20px; border-radius:10px;
+  font-weight:500; font-size:15px;
+  background:#fff; color:var(--ink); border:1px solid var(--line);
+  transition:all .15s ease;
+}
+.btn:hover{background:var(--line-soft); border-color:#d4d8de}
+.btn-primary{background:var(--primary); color:#fff; border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-dark); border-color:var(--primary-dark)}
+.btn-accent{background:var(--accent); color:#fff; border-color:var(--accent)}
+.btn-accent:hover{background:#c44e1f; border-color:#c44e1f}
+.btn-success{background:var(--success); color:#fff; border-color:var(--success)}
+.btn-ghost{background:transparent; border-color:transparent; color:var(--ink-soft)}
+.btn-ghost:hover{background:var(--line-soft)}
+.btn-lg{padding:14px 26px; font-size:16px}
+.btn-sm{padding:7px 12px; font-size:13px}
+
+/* ═══════════════════════════════════════════════════
+   Cards / common
+   ═══════════════════════════════════════════════════ */
+.card{background:var(--card); border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:var(--shadow-sm)}
+.section-title{display:flex; align-items:baseline; gap:12px; margin:28px 0 16px}
+.section-title h2{margin:0; font-size:22px; font-weight:700}
+.section-title .sub{color:var(--ink-mute); font-size:14px}
+.muted{color:var(--ink-mute)}
+.tag{
+  display:inline-flex; align-items:center; padding:2px 9px; border-radius:999px;
+  font-size:12px; font-weight:500; line-height:1.6;
+  background:var(--line-soft); color:var(--ink-soft);
+}
+.tag.new{background:var(--accent-soft); color:var(--accent)}
+.tag.full{background:#fde2e2; color:var(--danger)}
+.tag.sport{background:#e3effb; color:var(--primary)}
+.tag.art{background:var(--purple-soft); color:var(--purple)}
+.divider{height:1px; background:var(--line); margin:18px 0}
+
+/* ═══════════════════════════════════════════════════
+   Landing
+   ═══════════════════════════════════════════════════ */
+.hero{
+  background:linear-gradient(135deg,#1a5fa8 0%, #2670bd 60%, #3a8bd8 100%);
+  color:#fff; border-radius:var(--r-xl); padding:36px 36px 32px;
+  position:relative; overflow:hidden;
+}
+.hero::before{
+  content:""; position:absolute; right:-80px; top:-80px;
+  width:340px; height:340px; border-radius:50%;
+  background:rgba(255,255,255,.08);
+}
+.hero::after{
+  content:""; position:absolute; right:80px; bottom:-120px;
+  width:240px; height:240px; border-radius:50%;
+  background:rgba(255,255,255,.06);
+}
+.hero .eyebrow{font-size:13px; letter-spacing:.18em; opacity:.85; font-weight:500}
+.hero h1{margin:8px 0 6px; font-size:34px; font-weight:900; letter-spacing:-.01em}
+.hero .lede{opacity:.9; font-size:15px; max-width:580px}
+.hero .meta{display:flex; gap:24px; margin-top:18px; flex-wrap:wrap; position:relative; z-index:1}
+.hero .meta .it{display:flex; align-items:center; gap:8px; font-size:14px; opacity:.92}
+.hero .meta .dot{width:6px; height:6px; border-radius:50%; background:#fff}
+
+.entries{display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:22px}
+.entry{
+  border-radius:var(--r-lg); padding:24px 22px 22px;
+  border:1px solid var(--line); background:#fff;
+  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  cursor:pointer; position:relative; overflow:hidden;
+  display:flex; flex-direction:column; min-height:200px;
+}
+.entry:hover{transform:translateY(-3px); box-shadow:var(--shadow-lg); border-color:transparent}
+.entry .badge{
+  width:48px; height:48px; border-radius:14px; display:grid; place-items:center;
+  font-size:24px; margin-bottom:14px;
+}
+.entry h3{margin:0 0 4px; font-size:19px; font-weight:700}
+.entry .sub{color:var(--ink-mute); font-size:13.5px; margin-bottom:14px}
+.entry .stat{display:flex; gap:10px; margin-top:auto; font-size:13px; color:var(--ink-soft)}
+.entry .stat strong{color:var(--ink); font-weight:700}
+.entry.blue .badge{background:var(--primary-soft); color:var(--primary)}
+.entry.blue:hover{box-shadow:0 18px 40px rgba(26,95,168,.18)}
+.entry.orange .badge{background:#fdebde; color:var(--accent)}
+.entry.orange:hover{box-shadow:0 18px 40px rgba(224,92,42,.18)}
+.entry.purple .badge{background:var(--purple-soft); color:var(--purple)}
+.entry.purple:hover{box-shadow:0 18px 40px rgba(124,93,200,.18)}
+.entry .arrow{position:absolute; right:18px; top:22px; color:var(--ink-mute); transition:transform .18s ease}
+.entry:hover .arrow{transform:translateX(4px); color:var(--primary)}
+
+/* Timeline */
+.timeline{padding:24px 26px}
+.timeline h3{margin:0 0 4px; font-size:18px}
+.timeline .lede{color:var(--ink-mute); font-size:14px; margin-bottom:18px}
+.tl-grid{display:grid; grid-template-columns:140px 1fr 130px; gap:0}
+.tl-row{display:contents}
+.tl-row > *{padding:11px 12px; border-top:1px solid var(--line-soft)}
+.tl-row:first-child > *{border-top:0}
+.tl-stage{font-weight:600; color:var(--primary); font-size:13.5px}
+.tl-stage.s2{color:var(--accent)}
+.tl-stage.prep{color:var(--ink-mute)}
+.tl-stage.open{color:var(--success); font-weight:700}
+.tl-task{font-size:14px}
+.tl-date{font-size:13px; color:var(--ink-soft); text-align:right; font-variant-numeric:tabular-nums}
+.tl-row.highlight .tl-task,.tl-row.highlight .tl-date{font-weight:700; color:var(--ink)}
+.tl-row.highlight .tl-stage{color:var(--accent)}
+
+/* ═══════════════════════════════════════════════════
+   Club listing
+   ═══════════════════════════════════════════════════ */
+.toolbar{
+  display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+  padding:14px 16px; background:#fff; border:1px solid var(--line);
+  border-radius:var(--r); box-shadow:var(--shadow-sm); margin-bottom:18px;
+  position:sticky; top:71px; z-index:30;
+}
+.search{flex:1; min-width:220px; position:relative}
+.search input{
+  width:100%; padding:10px 14px 10px 38px; border-radius:9px;
+  border:1px solid var(--line); background:var(--bg);
+  outline:none; transition:border-color .15s, background .15s;
+}
+.search input:focus{border-color:var(--primary); background:#fff}
+.search svg{position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--ink-mute)}
+.chips{display:flex; gap:6px; flex-wrap:wrap}
+.chip{
+  padding:7px 14px; border-radius:999px; font-size:13px;
+  background:var(--line-soft); color:var(--ink-soft); font-weight:500;
+  transition:all .12s;
+}
+.chip:hover{background:#e7eaf0}
+.chip.active{background:var(--primary); color:#fff}
+
+.club-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px}
+.club{
+  background:#fff; border:1px solid var(--line); border-radius:var(--r-lg);
+  padding:18px 18px 16px; display:flex; flex-direction:column; gap:10px;
+  transition:box-shadow .15s, transform .15s, border-color .15s;
+  position:relative;
+}
+.club:hover{box-shadow:var(--shadow); border-color:#dde2ea}
+.club .head{display:flex; align-items:flex-start; gap:10px}
+.club .name{font-weight:700; font-size:16.5px; flex:1; line-height:1.4}
+.club .price{font-weight:700; color:var(--primary); font-size:18px; font-variant-numeric:tabular-nums}
+.club .price .unit{font-size:12px; font-weight:400; color:var(--ink-mute); margin-left:2px}
+.club .meta{display:grid; grid-template-columns:auto 1fr; gap:6px 12px; font-size:13.5px; color:var(--ink-soft)}
+.club .meta .lbl{color:var(--ink-mute); white-space:nowrap}
+.club .tags{display:flex; gap:5px; flex-wrap:wrap; margin-top:auto}
+.club .note{font-size:12.5px; color:var(--ink-mute); padding-top:8px; border-top:1px dashed var(--line); line-height:1.55}
+.club .footer{display:flex; align-items:center; gap:10px; margin-top:6px}
+.spots{display:flex; align-items:center; gap:8px; flex:1; font-size:13px; color:var(--ink-soft)}
+.spots .bar{flex:1; height:6px; background:var(--line-soft); border-radius:999px; overflow:hidden}
+.spots .bar i{display:block; height:100%; background:var(--success); border-radius:999px}
+.spots.warn .bar i{background:var(--warn)}
+.spots.full .bar i{background:var(--danger)}
+.club.full{opacity:.65}
+.club.full .btn-primary{background:#bdc3cb; border-color:#bdc3cb; cursor:not-allowed}
+
+.empty{text-align:center; padding:60px 20px; color:var(--ink-mute)}
+.empty .ico{font-size:38px; margin-bottom:10px}
+
+/* Steps indicator */
+.steps{display:flex; gap:0; align-items:center; margin-bottom:22px}
+.step{display:flex; align-items:center; gap:9px; flex:1}
+.step .num{
+  width:28px; height:28px; border-radius:50%; display:grid; place-items:center;
+  background:var(--line); color:var(--ink-mute); font-weight:700; font-size:13px;
+  flex-shrink:0;
+}
+.step.active .num{background:var(--primary); color:#fff}
+.step.done .num{background:var(--success); color:#fff}
+.step .lbl{font-size:14px; color:var(--ink-mute); font-weight:500}
+.step.active .lbl,.step.done .lbl{color:var(--ink)}
+.step .line{flex:1; height:2px; background:var(--line); margin:0 4px}
+.step.done .line{background:var(--success)}
+
+/* Form */
+.form-card{padding:28px 30px}
+.warn-box{
+  background:var(--accent-soft); border:1px solid #f5b483;
+  color:#7c3a0e; border-radius:var(--r); padding:14px 16px;
+  display:flex; gap:12px; margin-bottom:22px;
+}
+.warn-box .ico{font-size:22px; flex-shrink:0; line-height:1.1}
+.warn-box strong{color:var(--accent)}
+.fset{margin-bottom:22px}
+.fset > h4{margin:0 0 12px; font-size:14px; font-weight:700; color:var(--primary); letter-spacing:.04em}
+.frow{display:grid; grid-template-columns:repeat(2,1fr); gap:14px}
+.field{display:flex; flex-direction:column; gap:6px}
+.field.full{grid-column:1/-1}
+.field label{font-size:13.5px; font-weight:500}
+.field label .req{color:var(--accent); margin-left:3px}
+.field .hint{font-size:12px; color:var(--ink-mute)}
+.field input,.field select{
+  padding:10px 12px; border:1px solid var(--line); border-radius:9px;
+  background:#fff; outline:none; transition:border-color .15s, box-shadow .15s;
+}
+.field input:focus,.field select:focus{
+  border-color:var(--primary); box-shadow:0 0 0 3px rgba(26,95,168,.12);
+}
+.field.bad input,.field.bad select{border-color:var(--danger)}
+.field .err{font-size:12px; color:var(--danger)}
+.checks{display:flex; flex-direction:column; gap:10px}
+.check{display:flex; gap:10px; padding:12px 14px; background:var(--bg); border:1px solid var(--line); border-radius:10px; cursor:pointer}
+.check input{margin-top:3px}
+.check span{font-size:13.5px; line-height:1.5}
+.form-actions{display:flex; justify-content:space-between; gap:10px; margin-top:24px; padding-top:20px; border-top:1px solid var(--line)}
+
+/* Confirm */
+.summary{padding:28px 30px}
+.summary .grp{display:grid; grid-template-columns:130px 1fr; gap:8px 20px; margin:14px 0}
+.summary .grp .k{color:var(--ink-mute); font-size:13.5px}
+.summary .grp .v{font-weight:500}
+.summary h3{margin:0 0 6px; font-size:18px}
+.terms{
+  background:var(--bg); border-left:3px solid var(--primary);
+  padding:14px 18px; border-radius:8px; margin:18px 0;
+  font-size:13px; color:var(--ink-soft); line-height:1.7;
+}
+.terms b{color:var(--ink)}
+.terms ol{margin:6px 0 0; padding-left:18px}
+.fee-line{display:flex; justify-content:space-between; padding:6px 0; font-size:14px}
+.fee-line.total{border-top:1px solid var(--line); margin-top:6px; padding-top:12px; font-size:18px; font-weight:700; color:var(--primary)}
+
+/* Done */
+.done-card{padding:48px 32px; text-align:center}
+.done-icon{
+  width:84px; height:84px; border-radius:50%; background:var(--success-soft);
+  color:var(--success); display:grid; place-items:center; margin:0 auto 18px;
+  font-size:42px;
+}
+.done-card h2{margin:0 0 6px; font-size:24px}
+.done-card .reg-id{
+  font-family:"SF Mono",Menlo,monospace; font-size:24px; font-weight:700; color:var(--primary);
+  background:var(--primary-soft); padding:10px 20px; border-radius:10px;
+  display:inline-block; margin:8px 0 18px; letter-spacing:.05em;
+}
+.done-card .next{color:var(--ink-soft); font-size:14px; max-width:480px; margin:0 auto 20px}
+.notice-card{
+  background:var(--warn-soft); border-left:4px solid var(--warn);
+  padding:14px 18px; border-radius:8px; text-align:left;
+  margin:14px auto; max-width:520px; font-size:13.5px; color:#6b4a17;
+}
+
+/* ═══════════════════════════════════════════════════
+   Admin
+   ═══════════════════════════════════════════════════ */
+.admin-shell{display:grid; grid-template-columns:240px 1fr; gap:0; min-height:calc(100vh - 70px)}
+.admin-side{
+  background:#fff; border-right:1px solid var(--line); padding:18px 14px;
+  position:sticky; top:71px; height:calc(100vh - 71px); overflow:auto;
+}
+.admin-side .title{font-size:13px; font-weight:700; color:var(--ink-mute); padding:0 8px 8px; letter-spacing:.05em}
+.admin-side a{
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px; border-radius:8px; font-size:14px;
+  color:var(--ink-soft); cursor:pointer; margin-bottom:2px;
+}
+.admin-side a:hover{background:var(--line-soft); color:var(--ink)}
+.admin-side a.active{background:var(--primary-soft); color:var(--primary); font-weight:600}
+.admin-main{padding:24px 28px 60px; background:var(--bg); overflow:auto}
+.admin-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:18px}
+.admin-head h2{margin:0; font-size:22px}
+
+.kpi-row{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px}
+.kpi{background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px 18px}
+.kpi .lbl{font-size:13px; color:var(--ink-mute)}
+.kpi .val{font-size:28px; font-weight:700; color:var(--primary); font-variant-numeric:tabular-nums}
+.kpi .sub{font-size:12px; color:var(--ink-mute); margin-top:2px}
+
+.chart-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+.chart-card{background:#fff; border:1px solid var(--line); border-radius:12px; padding:18px}
+.chart-card h3{margin:0 0 12px; font-size:15px; font-weight:600}
+.chart-card.full{grid-column:1/-1}
+.chart-card canvas{max-height:300px}
+
+.table-wrap{background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden}
+.table-wrap .table-head{padding:14px 18px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap}
+.tbl{width:100%; border-collapse:collapse; font-size:14px}
+.tbl th{background:var(--bg); padding:10px 14px; text-align:left; font-weight:600; color:var(--ink-soft); border-bottom:1px solid var(--line); white-space:nowrap}
+.tbl td{padding:10px 14px; border-bottom:1px solid var(--line-soft)}
+.tbl tr:hover td{background:var(--primary-tint)}
+.tbl .num{text-align:right; font-variant-numeric:tabular-nums}
+.tbl .badge{padding:2px 8px; border-radius:999px; font-size:12px}
+.tbl .badge.pending{background:var(--warn-soft); color:var(--warn)}
+.tbl .badge.paid{background:var(--success-soft); color:var(--success)}
+
+/* Modal */
+.modal-bg{
+  position:fixed; inset:0; background:rgba(15,23,42,.5);
+  display:none; align-items:center; justify-content:center; z-index:200;
+  backdrop-filter:blur(2px);
+}
+.modal-bg.show{display:flex}
+.modal{background:#fff; border-radius:16px; padding:28px 30px; width:min(420px,90vw); box-shadow:var(--shadow-lg)}
+.modal h3{margin:0 0 6px; font-size:20px}
+.modal p{color:var(--ink-mute); margin:0 0 18px; font-size:14px}
+
+/* Print sheets */
+.print-sheet{display:none}
+.print-only{display:none}
+
+/* ═══════════════════════════════════════════════════
+   Print
+   ═══════════════════════════════════════════════════ */
+@media print{
+  body{background:#fff}
+  .topbar,.toolbar,.steps,.no-print,.admin-side,.admin-head,.kpi-row,.chart-grid{display:none !important}
+  .container,.admin-main{padding:0; max-width:none}
+  .print-only{display:block}
+  .print-sheet{display:block; page-break-after:always}
+  .print-sheet:last-child{page-break-after:auto}
+  @page{size:A4; margin:14mm}
+  @page :first{margin-top:14mm}
+
+  .roster-sheet table{width:100%; border-collapse:collapse; font-size:11px}
+  .roster-sheet th,.roster-sheet td{border:1px solid #333; padding:5px 4px; text-align:center}
+  .roster-sheet th{background:#e8f0fb}
+  .roster-sheet h1{font-size:16px; margin:0 0 6px; text-align:center}
+  .roster-sheet .info{font-size:12px; margin-bottom:8px; display:grid; grid-template-columns:1fr 1fr; gap:4px 16px}
+  .roster-sheet .foot{font-size:11px; margin-top:10px; display:flex; justify-content:space-between}
+
+  .notice-page{display:grid; grid-template-rows:1fr 1fr; gap:12mm; height:auto; min-height:267mm}
+  .notice-slip{
+    border:2px solid var(--primary); border-radius:6px; padding:12mm 14mm;
+    page-break-inside:avoid; font-size:12.5px;
+  }
+  .notice-slip h2{margin:0 0 6px; font-size:15px; text-align:center; color:var(--primary)}
+  .notice-slip .sub{text-align:center; font-size:13px; margin-bottom:10px}
+  .notice-slip .row{display:grid; grid-template-columns:80px 1fr; gap:3px 8px; font-size:12px; line-height:1.7}
+  .notice-slip .row .l{color:#555}
+  .notice-slip .warn{font-size:11px; margin-top:8px; padding-top:6px; border-top:1px dashed #999; line-height:1.6}
+}
+
+@media screen{
+  .print-only{display:none !important}
+}
+
+/* ═══════════════════════════════════════════════════
+   Mobile
+   ═══════════════════════════════════════════════════ */
+@media (max-width:760px){
+  .topbar{padding:12px 14px}
+  .topbar .school .name{font-size:14px}
+  .container{padding:16px 14px 60px}
+  .hero{padding:24px 22px}
+  .hero h1{font-size:24px}
+  .entries{grid-template-columns:1fr; gap:12px}
+  .frow{grid-template-columns:1fr}
+  .form-card,.summary{padding:20px 18px}
+  .toolbar{position:static}
+  .admin-shell{grid-template-columns:1fr}
+  .admin-side{position:static; height:auto; border-right:0; border-bottom:1px solid var(--line); display:flex; gap:6px; flex-wrap:wrap; padding:10px}
+  .admin-side .title{display:none}
+  .admin-side a{margin:0; padding:7px 10px; font-size:13px}
+  .admin-main{padding:16px}
+  .kpi-row{grid-template-columns:repeat(2,1fr)}
+  .chart-grid{grid-template-columns:1fr}
+  .tl-grid{grid-template-columns:90px 1fr 100px}
+  .tl-row > *{padding:8px 6px}
+  .tl-stage,.tl-task,.tl-date{font-size:12.5px}
+  .summary .grp{grid-template-columns:1fr}
+  .summary .grp .k{font-size:12px; color:var(--ink-mute); margin-bottom:-4px}
+  .step .lbl{font-size:12px}
+  .step .num{width:24px; height:24px; font-size:12px}
+}
+
+/* tiny anim */
+@keyframes pop{from{transform:scale(.96); opacity:0}to{transform:scale(1); opacity:1}}
+.view{animation:pop .25s ease-out}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="topbar no-print">
+    <div class="crest">雙</div>
+    <div class="school">
+      <div class="name">臺北市雙蓮國小</div>
+      <div class="sys">115學年度上學期 ｜ 課外社團報名系統</div>
+    </div>
+    <nav>
+      <button class="nav-btn" data-nav="home">首頁</button>
+      <button class="nav-btn" data-nav="my">我的報名</button>
+      <button class="gear" id="adminGear" title="管理員入口">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      </button>
+    </nav>
+  </header>
+
+  <main class="container" id="root"><!-- view rendered here --></main>
+</div>
+
+<!-- Admin login -->
+<div class="modal-bg" id="loginModal">
+  <div class="modal">
+    <h3>管理員登入</h3>
+    <p>請輸入後台管理密碼</p>
+    <div class="field">
+      <input type="password" id="adminPass" placeholder="密碼" autocomplete="off">
+      <div class="err" id="loginErr" style="display:none">密碼錯誤，請重試</div>
+    </div>
+    <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:18px">
+      <button class="btn" id="loginCancel">取消</button>
+      <button class="btn btn-primary" id="loginOk">登入</button>
+    </div>
+  </div>
+</div>
+
+<!-- Print region -->
+<div id="printRegion" class="print-only"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   DATA — clubs
+   ═══════════════════════════════════════════════════ */
+const clubs_115 = [
+  { id:"115-01", day:"週一", time:"13:40~15:10", name:"兒童打擊樂", grade:"1-6年級", teacher:"呂治民", location:"五棟一樓交通安全教室", tuition:3036, material:250, total:3286, sessions:17, spots:14, note:"參加學生為管樂團儲備生。另收材料費250元。", type:"art" },
+  { id:"115-02", day:"週一", time:"16:00~17:30", name:"游泳社A", grade:"1-6年級", teacher:"高子惟、邱威連", location:"游泳池", tuition:3279, material:100, total:3379, sessions:17, spots:28, note:"自備泳具。另收材料費100元。", type:"sport" },
+  { id:"115-03", day:"週一", time:"16:00~17:30", name:"樂樂棒球社A", grade:"1-6年級", teacher:"洪嘉星、張皓", location:"操場（雨備:605）", tuition:1822, material:150, total:1972, sessions:17, spots:28, note:"新增社團。另收材料費150元。招收18~36人。", type:"sport", isNew:true },
+  { id:"115-04", day:"週二", time:"13:40~15:10", name:"足球社（基礎班）", grade:"1-6年級", teacher:"戴翊昀", location:"操場（雨天:聯絡走廊）", tuition:2619, material:0, total:2619, sessions:20, spots:14, note:"自備足球或請教練協助購買。", type:"sport" },
+  { id:"115-05", day:"週二", time:"13:40~15:10", name:"足球社（進階班）", grade:"1-6年級", teacher:"蔡秉祐", location:"操場（雨天:聯絡走廊）", tuition:2619, material:0, total:2619, sessions:20, spots:14, note:"自備足球或請教練協助購買。", type:"sport" },
+  { id:"115-06", day:"週二", time:"16:00~17:30", name:"直排輪社A", grade:"1-6年級", teacher:"林春女", location:"操場（雨備:一樓走廊）", tuition:2381, material:0, total:2381, sessions:20, spots:14, note:"自備直排輪、護掌、護膝、護肘、安全帽。以舊生優先錄取。", type:"sport" },
+  { id:"115-07", day:"週二", time:"16:00~17:30", name:"跆拳道社A", grade:"1-6年級", teacher:"胡靜雯", location:"331韻律教室", tuition:2857, material:0, total:2857, sessions:20, spots:14, note:"著輕便服裝，道服1,200元教練可代購。以舊生優先錄取。", type:"sport" },
+  { id:"115-08", day:"週二", time:"16:00~17:30", name:"游泳社B", grade:"1-6年級", teacher:"高子惟、邱威連", location:"游泳池", tuition:3857, material:100, total:3957, sessions:20, spots:28, note:"自備泳具。另收材料費100元。", type:"sport" },
+  { id:"115-09", day:"週二", time:"16:00~17:30", name:"兒童陶藝", grade:"1-6年級", teacher:"鄭巧伶", location:"活動中心一樓陶藝教室", tuition:2143, material:800, total:2943, sessions:20, spots:14, note:"另收材料費800元。", type:"art" },
+  { id:"115-10", day:"週二", time:"16:00~17:30", name:"成報主播社", grade:"3-6年級", teacher:"張皓", location:"605教室", tuition:2143, material:200, total:2343, sessions:20, spots:14, note:"另收材料費200元。", type:"art" },
+  { id:"115-11", day:"週二", time:"16:00~17:30", name:"兒童美術社A", grade:"1-6年級", teacher:"羅歆", location:"一棟三樓美勞教室1", tuition:2143, material:500, total:2643, sessions:20, spots:14, note:"另收材料費500元。", type:"art" },
+  { id:"115-12", day:"週二", time:"16:00~17:30", name:"圍棋初階", grade:"1-6年級", teacher:"溫翊凱", location:"一棟三樓美勞教室2", tuition:2143, material:300, total:2443, sessions:20, spots:14, note:"另收材料費300元。", type:"art" },
+  { id:"115-13", day:"週二", time:"16:00~17:30", name:"童軍桌遊探索班", grade:"1-6年級", teacher:"蔣建國", location:"503教室", tuition:2143, material:100, total:2243, sessions:20, spots:14, note:"另收材料費100元。", type:"art" },
+  { id:"115-14", day:"週二", time:"16:00~17:30", name:"籃球社A", grade:"1-6年級", teacher:"洪嘉星", location:"操場（雨備:一樓走廊）", tuition:2143, material:150, total:2293, sessions:20, spots:14, note:"新增社團。另收材料費150元。", type:"sport", isNew:true },
+  { id:"115-15", day:"週三", time:"13:30~15:10", name:"Scratch小小遊戲設計師", grade:"1-6年級", teacher:"吳宇凱", location:"一棟三樓美勞教室2", tuition:2024, material:1940, total:3964, sessions:17, spots:14, note:"另收材料費1,940元（含教材USB）。", type:"art" },
+  { id:"115-16", day:"週三", time:"13:40~15:10", name:"足球社A（基礎班）", grade:"1-6年級", teacher:"戴翊昀", location:"操場（雨天:聯絡走廊）", tuition:2226, material:0, total:2226, sessions:17, spots:14, note:"自備足球或請教練協助購買。", type:"sport" },
+  { id:"115-17", day:"週三", time:"13:40~15:10", name:"足球社A（進階班）", grade:"1-6年級", teacher:"蔡秉祐", location:"操場（雨天:聯絡走廊）", tuition:2226, material:0, total:2226, sessions:17, spots:14, note:"自備足球或請教練協助購買。", type:"sport" },
+  { id:"115-18", day:"週三", time:"13:40~15:10", name:"兒童街舞C（初階）", grade:"1-6年級", teacher:"歐怡君", location:"331韻律教室", tuition:3036, material:0, total:3036, sessions:17, spots:14, note:"超過人數由電腦抽籤。", type:"sport" },
+  { id:"115-19", day:"週三", time:"14:30~16:00", name:"游泳社C", grade:"1-6年級", teacher:"高子惟、邱威連", location:"游泳池", tuition:3279, material:100, total:3379, sessions:17, spots:28, note:"自備泳具。另收材料費100元。", type:"sport" },
+  { id:"115-20", day:"週三", time:"15:10~16:40", name:"兒童街舞B（中階）", grade:"1-6年級", teacher:"歐怡君", location:"331韻律教室", tuition:3036, material:0, total:3036, sessions:17, spots:14, note:"以舊生優先錄取。超過人數由電腦抽籤。", type:"sport" },
+  { id:"115-21", day:"週三", time:"16:00~17:30", name:"美感手帳拼貼社", grade:"1-6年級", teacher:"楊婉君", location:"一棟三樓美勞教室1", tuition:1822, material:1000, total:2822, sessions:17, spots:14, note:"另收材料費1,000元（含活頁手帳冊及素材禮包）。", type:"art" },
+  { id:"115-22", day:"週三", time:"16:00~17:30", name:"玩具公仔設計社", grade:"1-6年級", teacher:"郭宇帆", location:"一棟三樓美勞教室2", tuition:1822, material:1000, total:2822, sessions:17, spots:14, note:"另收材料費（依課程公告）。", type:"art" },
+  { id:"115-23", day:"週三", time:"16:00~17:30", name:"點心DIY社", grade:"1-4年級", teacher:"藍淑英", location:"待定", tuition:1822, material:800, total:2622, sessions:17, spots:14, note:"另收材料費（依課程公告）。", type:"art" },
+  { id:"115-24", day:"週三", time:"16:00~17:30", name:"籃球社B", grade:"1-6年級", teacher:"洪嘉星", location:"操場（雨備:一樓走廊）", tuition:1822, material:150, total:1972, sessions:17, spots:14, note:"新增社團。另收材料費150元。", type:"sport", isNew:true },
+  { id:"115-25", day:"週四", time:"14:30~16:00", name:"兒童律動社A", grade:"1-6年級", teacher:"歐怡君", location:"331律動教室", tuition:3393, material:0, total:3393, sessions:19, spots:14, note:"超過人數由電腦抽籤。", type:"sport" },
+  { id:"115-26", day:"週四", time:"14:30~16:00", name:"直排輪社B", grade:"1-6年級", teacher:"林春女", location:"操場（雨備:一樓走廊）", tuition:2262, material:0, total:2262, sessions:19, spots:14, note:"自備直排輪、護掌、護膝、護肘、安全帽。以舊生優先錄取。", type:"sport" },
+  { id:"115-27", day:"週四", time:"16:00~17:30", name:"STEAM藝術", grade:"1-6年級", teacher:"羅歆", location:"一棟三樓美勞教室2", tuition:2036, material:800, total:2836, sessions:19, spots:14, note:"另收材料費800元。", type:"art" },
+  { id:"115-28", day:"週四", time:"16:00~17:30", name:"兒童街舞A（進階）", grade:"1-6年級", teacher:"歐怡君", location:"三棟三樓331教室", tuition:3393, material:0, total:3393, sessions:19, spots:14, note:"以舊生優先錄取。超過人數由電腦抽籤。", type:"sport" },
+  { id:"115-29", day:"週四", time:"16:00~17:30", name:"直排輪社C", grade:"1-6年級", teacher:"林春女", location:"操場（雨備:一樓走廊）", tuition:2262, material:0, total:2262, sessions:19, spots:14, note:"自備直排輪、護掌、護膝、護肘、安全帽。以舊生優先錄取。", type:"sport" },
+  { id:"115-30", day:"週四", time:"16:00~17:30", name:"游泳社D", grade:"1-6年級", teacher:"高子惟、邱威連", location:"游泳池", tuition:3664, material:100, total:3764, sessions:19, spots:28, note:"自備泳具。另收材料費100元。", type:"sport" },
+  { id:"115-31", day:"週四", time:"16:00~17:30", name:"兒童美術社B", grade:"1-6年級", teacher:"郭紋秀", location:"一棟三樓美勞教室1", tuition:2036, material:500, total:2536, sessions:19, spots:14, note:"另收材料費500元。", type:"art" },
+  { id:"115-32", day:"週四", time:"16:00~17:30", name:"圍棋中階", grade:"1-6年級", teacher:"溫翊凱", location:"一棟三樓美勞教室2", tuition:2036, material:300, total:2336, sessions:19, spots:14, note:"另收材料費300元。", type:"art" },
+  { id:"115-33", day:"週四", time:"16:00~17:30", name:"烏克麗麗（初階）", grade:"1-6年級", teacher:"蔣建國", location:"603教室", tuition:2036, material:250, total:2286, sessions:19, spots:14, note:"另收材料費250元。", type:"art" },
+  { id:"115-34", day:"週四", time:"16:00~17:30", name:"籃球社C", grade:"1-6年級", teacher:"洪嘉星", location:"操場（雨備:一樓走廊）", tuition:2036, material:150, total:2186, sessions:19, spots:14, note:"新增社團。另收材料費150元。", type:"sport", isNew:true },
+  { id:"115-35", day:"週五", time:"13:40~15:10", name:"兒童街舞D（初階）", grade:"1-6年級", teacher:"歐怡君", location:"三棟三樓331教室", tuition:2322, material:0, total:2322, sessions:13, spots:14, note:"5/29不上課。超過人數由電腦抽籤。", type:"sport" },
+  { id:"115-36", day:"週五", time:"14:30~16:00", name:"直排輪社D", grade:"1-6年級", teacher:"林春女", location:"操場（雨備:一樓走廊）", tuition:1667, material:0, total:1667, sessions:14, spots:14, note:"自備直排輪、護掌、護膝、護肘、安全帽。以舊生優先錄取。", type:"sport" },
+  { id:"115-37", day:"週五", time:"15:10~16:40", name:"兒童律動社B", grade:"1-6年級", teacher:"歐怡君", location:"三棟三樓331教室", tuition:2322, material:0, total:2322, sessions:13, spots:14, note:"5/29不上課。超過人數由電腦抽籤。", type:"sport" },
+  { id:"115-38", day:"週五", time:"16:00~17:30", name:"直排輪社E", grade:"1-6年級", teacher:"林春女", location:"操場（雨備:一樓走廊）", tuition:1667, material:0, total:1667, sessions:14, spots:14, note:"自備直排輪、護掌、護膝、護肘、安全帽。以舊生優先錄取。", type:"sport" },
+  { id:"115-39", day:"週五", time:"16:00~17:30", name:"跆拳道社B", grade:"1-6年級", teacher:"胡靜雯", location:"待定", tuition:2001, material:0, total:2001, sessions:14, spots:14, note:"著輕便服裝，道服1,200元教練可代購。以舊生優先錄取。", type:"sport" },
+  { id:"115-40", day:"週五", time:"16:00~17:30", name:"足球社B", grade:"1-6年級", teacher:"鄭晨昇", location:"籃球場（雨天:聯絡走廊）", tuition:1834, material:0, total:1834, sessions:14, spots:14, note:"自備足球。以舊生優先錄取。", type:"sport" },
+  { id:"115-41", day:"週五", time:"16:00~17:30", name:"游泳社E", grade:"1-6年級", teacher:"高子惟、邱威連", location:"游泳池", tuition:2700, material:100, total:2800, sessions:14, spots:28, note:"自備泳具。另收材料費100元。", type:"sport" },
+  { id:"115-42", day:"週五", time:"16:00~17:30", name:"烏克麗麗歡樂彈唱班", grade:"1-6年級", teacher:"蔣建國", location:"603教室", tuition:1500, material:100, total:1600, sessions:14, spots:14, note:"另收材料費100元。", type:"art" },
+  { id:"115-43", day:"週五", time:"16:00~17:30", name:"樂樂棒球社B", grade:"1-6年級", teacher:"洪嘉星、張皓", location:"操場（雨備:605）", tuition:1500, material:100, total:1600, sessions:14, spots:28, note:"新增社團。另收材料費100元。招收18~36人。", type:"sport", isNew:true },
+];
+
+const clubs_summer = [
+  { id:"SUM-01", time:"A時段 08:30~10:00", name:"花漾美感培育營", grade:"1-6年級", teacher:"楊婉君", location:"美勞教室二", tuition:2471, material:1400, total:3871, spots:16, note:"另收材料費1,400元。", type:"art" },
+  { id:"SUM-02", time:"A時段 08:30~10:00", name:"烏克麗麗歡樂彈唱社", grade:"1-6年級", teacher:"蔣建國", location:"503教室", tuition:1171, material:100, total:1271, spots:16, note:"另收材料費100元。", type:"art" },
+  { id:"SUM-03", time:"A時段 08:30~10:00", name:"Scratch小小遊戲設計師A", grade:"1-6年級", teacher:"吳宇凱", location:"特色教室（國際教室）", tuition:2151, material:1080, total:3231, spots:16, note:"另收材料費1,080元（含教材USB）。", type:"art" },
+  { id:"SUM-04", time:"A時段 08:30~10:00", name:"兒童美術A", grade:"1-4年級", teacher:"羅歆", location:"美勞教室一", tuition:1871, material:800, total:2671, spots:16, note:"另收材料費800元。", type:"art" },
+  { id:"SUM-05", time:"A時段 08:30~10:00", name:"樂樂棒球社", grade:"3-6年級", teacher:"張皓", location:"操場", tuition:1221, material:0, total:1221, spots:16, note:"", type:"sport" },
+  { id:"SUM-06", time:"A時段 08:30~10:00", name:"游泳A", grade:"1-6年級", teacher:"高子惟、邱威連", location:"游泳池", tuition:1786, material:0, total:1786, spots:16, note:"自備泳具。", type:"sport" },
+  { id:"SUM-07", time:"B時段 10:30~12:00", name:"跆拳道", grade:"1-6年級", teacher:"胡靜雯", location:"活動中心一樓", tuition:1310, material:0, total:1310, spots:16, note:"新生需準備跆拳道服（教練可協助代訂）。", type:"sport" },
+  { id:"SUM-08", time:"B時段 10:30~12:00", name:"手帳拼貼夢工坊", grade:"1-6年級", teacher:"楊婉君", location:"美勞教室二", tuition:1871, material:800, total:2671, spots:16, note:"另收材料費800元。", type:"art" },
+  { id:"SUM-09", time:"B時段 10:30~12:00", name:"桌遊社", grade:"1-6年級", teacher:"蔣建國", location:"503教室", tuition:1171, material:100, total:1271, spots:16, note:"另收材料費100元。", type:"art" },
+  { id:"SUM-10", time:"B時段 10:30~12:00", name:"兒童美術B", grade:"1-4年級", teacher:"羅歆", location:"美勞教室一", tuition:1871, material:800, total:2671, spots:16, note:"另收材料費800元。", type:"art" },
+  { id:"SUM-11", time:"B時段 10:30~12:00", name:"Scratch小小遊戲設計師B", grade:"1-6年級", teacher:"吳宇凱", location:"特色教室（國際教室）", tuition:2151, material:1080, total:3231, spots:16, note:"另收材料費1,080元（含教材USB）。", type:"art" },
+  { id:"SUM-12", time:"B時段 10:30~12:00", name:"成報主播社", grade:"3-6年級", teacher:"張皓", location:"505電腦教室", tuition:1071, material:0, total:1071, spots:16, note:"", type:"art" },
+  { id:"SUM-13", time:"B時段 10:30~12:00", name:"游泳B", grade:"1-6年級", teacher:"高子惟、邱威連", location:"游泳池", tuition:1786, material:0, total:1786, spots:16, note:"自備泳具。", type:"sport" },
+  { id:"SUM-14", time:"C時段 13:00~14:30", name:"拯救地球探險隊", grade:"1-6年級", teacher:"楊婉君", location:"一棟三樓美勞教室二", tuition:2271, material:1200, total:3471, spots:16, note:"另收材料費1,200元。", type:"art" },
+  { id:"SUM-15", time:"C時段 13:00~14:30", name:"兒童街舞社A班", grade:"1-6年級", teacher:"歐怡君", location:"331律動教室", tuition:1786, material:0, total:1786, spots:16, note:"", type:"sport" },
+  { id:"SUM-16", time:"C時段 13:00~14:30", name:"點心DIY", grade:"1-4年級", teacher:"藍淑英", location:"403教室", tuition:1871, material:800, total:2671, spots:16, note:"另收材料費800元。", type:"art" },
+  { id:"SUM-17", time:"C時段 13:00~14:30", name:"游泳C", grade:"1-6年級", teacher:"高子惟、邱威連", location:"游泳池", tuition:1786, material:0, total:1786, spots:16, note:"自備泳具。", type:"sport" },
+  { id:"SUM-18", time:"D時段 14:40~16:10", name:"兒童街舞社B班", grade:"1-6年級", teacher:"歐怡君", location:"331律動教室", tuition:1786, material:0, total:1786, spots:16, note:"", type:"sport" },
+  { id:"SUM-19", time:"D時段 14:40~16:10", name:"點心DIY社B班", grade:"1-4年級", teacher:"藍淑英", location:"403教室", tuition:1871, material:800, total:2671, spots:16, note:"另收材料費800元。", type:"art" },
+  { id:"SUM-20", time:"D時段 14:40~16:10", name:"游泳D", grade:"1-6年級", teacher:"高子惟、邱威連", location:"游泳池", tuition:1786, material:0, total:1786, spots:16, note:"自備泳具。", type:"sport" },
+];
+
+const clubs_grade1 = [
+  { id:"G1-01", day:"週一", time:"13:40~15:10", name:"兒童打擊樂（小一班）", grade:"小一新生", teacher:"呂治民", location:"五棟一樓交通安全教室", tuition:3036, material:250, total:3286, sessions:17, spots:14, note:"管樂團儲備生培訓。另收材料費250元。", type:"art" },
+  { id:"G1-02", day:"週一", time:"16:00~17:30", name:"游泳社A（小一班）", grade:"小一新生", teacher:"高子惟、邱威連", location:"游泳池", tuition:3279, material:100, total:3379, sessions:17, spots:14, note:"自備泳具。另收材料費100元。", type:"sport" },
+  { id:"G1-03", day:"週四", time:"14:30~16:00", name:"兒童律動社（小一班）", grade:"小一新生", teacher:"歐怡君", location:"331律動教室", tuition:3393, material:0, total:3393, sessions:19, spots:14, note:"增加身體柔軟度，促進肢體平衡與協調性。", type:"sport" },
+  { id:"G1-04", day:"週四", time:"14:30~16:00", name:"直排輪社B（小一班）", grade:"小一新生", teacher:"林春女", location:"操場（雨備:一樓走廊）", tuition:2262, material:0, total:2262, sessions:19, spots:14, note:"自備直排輪、護掌、護膝、護肘、安全帽。", type:"sport" },
+  { id:"G1-05", day:"週四", time:"16:00~17:30", name:"烏克麗麗（小一班）", grade:"小一新生", teacher:"蔣建國", location:"603教室", tuition:2036, material:250, total:2286, sessions:19, spots:14, note:"另收材料費250元。", type:"art" },
+];
+
+/* category metadata */
+const CATEGORIES = {
+  "115":     { code:"A", title:"115學年度課外社團", sub:"正式開課:9/7（一）", emoji:"🎓", color:"blue",  data:clubs_115,    showDay:true,  classes:["新生班","101","102","103","104","105","201","202","203","204","205","301","302","303","304","305","401","402","403","404","405","501","502","503","504","505","601","602","603","604","605"] },
+  "summer":  { code:"S", title:"114年度暑假社團", sub:"7/6（日）～7/17（四）共10天", emoji:"☀️", color:"orange", data:clubs_summer, showDay:false, classes:["新生班","101","102","103","104","105","201","202","203","204","205","301","302","303","304","305","401","402","403","404","405","501","502","503","504","505","601","602","603","604","605"] },
+  "grade1":  { code:"G", title:"小一社團",       sub:"限115學年度升小一新生", emoji:"⭐", color:"purple", data:clubs_grade1, showDay:true,  classes:["新生（尚未分班）"] },
+};
+
+const TIMELINE = [
+  { stage:"行政準備",  task:"\n",      date:"\n",      cls:"prep" },
+  { stage:"行政準備",  task:"\n",      date:"\n", cls:"prep" },
+  { stage:"第一階段",  task:"報名開始",                    date:"5/25（一)~5/27(三)",      cls:"", highlight:true },
+  { stage:"第一階段",  task:"報名截止",                    date:"\n",      cls:"" },
+  { stage:"第一階段",  task:"錄取公告",                    date:"5/29（五）",      cls:"" },
+  { stage:"第一階段",  task:"繳費時間",                  date:"6/4（四）~6/8（一）",       cls:"" },
+  { stage:"第一階段",  task:"繳費截止",                    date:"6/8（一）",       cls:"", highlight:true },
+  { stage:"第一階段",  task:"\n",                    date:"\n",      cls:"" },
+  { stage:"第二階段",  task:"第二階段名額公告",            date:"6/19（五）",      cls:"s2", highlight:true },
+  { stage:"第二階段",  task:"報名開始",                    date:"6/20（六）~6/22(一)",      cls:"s2" },
+  { stage:"第二階段",  task:"報名截止",                    date:"6/22（一）",      cls:"s2" },
+  { stage:"第二階段",  task:"繳費截止",                    date:"6/30（二）",      cls:"s2" },
+  { stage:"第二階段",  task:"銀行銷帳",                    date:"7/10（五）",      cls:"s2" },
+  { stage:"開課前",    task:"社團上課通知單發放",          date:"9/1（二）",       cls:"prep" },
+  { stage:"開課前",    task:"正式開課",                    date:"9/7（一）",       cls:"open", highlight:true },
+];
+
+/* Class start dates (for roster sessions). Per spec — semester runs 9/8 → 1/19 ish */
+const CLASS_START = {
+  "週一":["9/8","9/15","9/22","9/29","10/6","10/13","10/20","10/27","11/3","11/10","11/17","11/24","12/1","12/8","12/15","12/22","1/5","1/12","1/19"],
+  "週二":["9/9","9/16","9/23","9/30","10/7","10/14","10/21","10/28","11/4","11/11","11/18","11/25","12/2","12/9","12/16","12/23","12/30","1/6","1/13","1/20"],
+  "週三":["9/10","9/17","9/24","10/1","10/8","10/15","10/22","10/29","11/5","11/12","11/19","11/26","12/3","12/10","12/17","12/24","12/31","1/7","1/14","1/21"],
+  "週四":["9/11","9/18","9/25","10/2","10/9","10/16","10/23","10/30","11/6","11/13","11/20","11/27","12/4","12/11","12/18","12/25","1/1","1/8","1/15","1/22"],
+  "週五":["9/12","9/19","9/26","10/3","10/10","10/17","10/24","10/31","11/7","11/14","11/21","11/28","12/5","12/12","12/19","12/26","1/2","1/9","1/16","1/23"],
+};
+
+/* ═══════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════ */
+const STORAGE_KEY = "sles_clubs_v1";
+const ADMIN_PASSWORD = "sles2026";
+
+const state = {
+  view:"home",
+  category:"115",
+  filterDay:"全部",
+  filterType:"all",
+  search:"",
+  selectedClub:null,
+  formData:{},
+  registrations:loadRegs(),
+  isAdmin:false,
+  adminTab:"dashboard",
+  myReg:null,
+};
+
+function loadRegs(){
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch { return []; }
+}
+function saveRegs(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.registrations)); }
+
+/* Seed demo data on first load so admin views aren't empty (invoked at bottom after helpers are defined) */
+function seedDemo(){
+  const seed = [
+    { clubId:"115-11", classNo:"101", seatNo:"05", studentName:"王小明", contactName:"王大明", contactPhone:"0912345678" },
+    { clubId:"115-02", classNo:"101", seatNo:"05", studentName:"王小明", contactName:"王大明", contactPhone:"0912345678" },
+    { clubId:"115-04", classNo:"203", seatNo:"12", studentName:"李大華", contactName:"李正一", contactPhone:"0922334455" },
+    { clubId:"115-08", classNo:"203", seatNo:"12", studentName:"李大華", contactName:"李正一", contactPhone:"0922334455" },
+    { clubId:"115-11", classNo:"203", seatNo:"08", studentName:"陳小美", contactName:"陳爸爸", contactPhone:"0933445566" },
+    { clubId:"115-25", classNo:"304", seatNo:"15", studentName:"張育成", contactName:"張媽媽", contactPhone:"0911223344" },
+    { clubId:"115-07", classNo:"405", seatNo:"22", studentName:"黃志偉", contactName:"黃父", contactPhone:"0955667788" },
+    { clubId:"115-11", classNo:"405", seatNo:"22", studentName:"黃志偉", contactName:"黃父", contactPhone:"0955667788" },
+    { clubId:"115-21", classNo:"301", seatNo:"03", studentName:"林雅婷", contactName:"林媽媽", contactPhone:"0966778899" },
+    { clubId:"115-15", classNo:"502", seatNo:"18", studentName:"周冠宇", contactName:"周父", contactPhone:"0988997755" },
+    { clubId:"115-15", classNo:"601", seatNo:"02", studentName:"吳承恩", contactName:"吳媽媽", contactPhone:"0977665544" },
+    { clubId:"115-30", classNo:"604", seatNo:"31", studentName:"高梓涵", contactName:"高爸爸", contactPhone:"0987654321" },
+    { clubId:"115-30", classNo:"503", seatNo:"09", studentName:"蘇昱辰", contactName:"蘇媽媽", contactPhone:"0912098767" },
+    { clubId:"SUM-01", classNo:"201", seatNo:"14", studentName:"鄭凱文", contactName:"鄭父", contactPhone:"0930111222" },
+    { clubId:"SUM-08", classNo:"201", seatNo:"14", studentName:"鄭凱文", contactName:"鄭父", contactPhone:"0930111222" },
+    { clubId:"G1-01",  classNo:"新生（尚未分班）", seatNo:"—", studentName:"何沛恩", contactName:"何媽媽", contactPhone:"0988123456" },
+    { clubId:"G1-03",  classNo:"新生（尚未分班）", seatNo:"—", studentName:"莊宇博", contactName:"莊父", contactPhone:"0911334455" },
+  ];
+  const dayMs = 24*3600*1000;
+  state.registrations = seed.map((s,i)=>{
+    const club = findClub(s.clubId);
+    const cat = club.id.startsWith("SUM")?"summer": club.id.startsWith("G1")?"grade1":"115";
+    const code = CATEGORIES[cat].code;
+    return {
+      id:`115${code}-${String(i+1).padStart(4,"0")}`,
+      category:cat, clubId:s.clubId, clubName:club.name,
+      classNo:s.classNo, seatNo:s.seatNo, studentName:s.studentName,
+      contactName:s.contactName, contactPhone:s.contactPhone,
+      totalFee:club.total, agreedTerms:true,
+      timestamp:new Date(Date.now()-((seed.length-i)*dayMs/3)).toISOString(),
+      status: i%4===0 ? "paid" : "pending",
+    };
+  });
+  saveRegs();
+}
+
+/* ═══════════════════════════════════════════════════
+   Helpers
+   ═══════════════════════════════════════════════════ */
+const $ = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const fmt$ = n => "NT$ " + (n||0).toLocaleString("en-US");
+const allClubs = ()=>[...clubs_115,...clubs_summer,...clubs_grade1];
+function findClub(id){ return allClubs().find(c=>c.id===id); }
+function spotsTaken(clubId){ return state.registrations.filter(r=>r.clubId===clubId).length; }
+function nextRegId(category){
+  const code = CATEGORIES[category].code;
+  const n = state.registrations.filter(r=>r.category===category).length + 1;
+  return `115${code}-${String(n).padStart(4,"0")}`;
+}
+function escapeHtml(s){ return String(s||"").replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;" }[c])); }
+function ce(html){ const t=document.createElement("template"); t.innerHTML=html.trim(); return t.content.firstChild; }
+function classOptions(category, current=""){
+  return CATEGORIES[category].classes.map(c=>`<option ${c===current?"selected":""}>${c}</option>`).join("");
+}
+function go(view, opts={}){
+  Object.assign(state, opts, { view });
+  render();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+/* ═══════════════════════════════════════════════════
+   RENDER router
+   ═══════════════════════════════════════════════════ */
+function render(){
+  const root = $("#root");
+  root.className = "container";
+  $$(".nav-btn").forEach(b=>b.classList.toggle("active", b.dataset.nav===navMatch()));
+
+  if (state.view === "admin") return renderAdmin();
+  switch (state.view){
+    case "home": root.innerHTML = viewHome(); afterHome(); break;
+    case "list": root.innerHTML = viewList(); afterList(); break;
+    case "form": root.innerHTML = viewForm(); afterForm(); break;
+    case "confirm": root.innerHTML = viewConfirm(); afterConfirm(); break;
+    case "done": root.innerHTML = viewDone(); afterDone(); break;
+    case "my":   root.innerHTML = viewMy(); afterMy(); break;
+    default: root.innerHTML = viewHome(); afterHome();
+  }
+}
+function navMatch(){ return state.view==="my"?"my":"home"; }
+
+/* ═══════════════════════════════════════════════════
+   VIEW: Home
+   ═══════════════════════════════════════════════════ */
+function viewHome(){
+  const totalRegs = state.registrations.length;
+  return `
+  <div class="view">
+    <section class="hero">
+      <div class="eyebrow">SHUANGLIAN ELEMENTARY · 115-1</div>
+      <h1>115學年度上學期 課外社團報名</h1>
+      <div class="lede">本學期共開設 43 班學年社團、20 班暑期社團、5 班小一專屬社團。<br>請於報名期間內依時程完成填寫，並於繳費截止日前完成繳費，逾期視同放棄。</div>
+      <div class="meta">
+        <div class="it"><span class="dot"></span>第一階段報名 5/25（一）開放</div>
+        <div class="it"><span class="dot"></span>正式開課 9/7（一）</div>
+        <div class="it"><span class="dot"></span>請假專線 02-2557-0309 轉 1022</div>
+      </div>
+    </section>
+
+    <div class="section-title"><h2>選擇報名類別</h2><span class="sub">請點擊您要報名的項目</span></div>
+    <div class="entries">
+      ${Object.entries(CATEGORIES).map(([k,c])=>`
+        <article class="entry ${c.color}" data-cat="${k}">
+          <div class="badge">${c.emoji}</div>
+          <h3>${c.title}</h3>
+          <div class="sub">${c.sub}</div>
+          <div class="stat">
+            <div>共 <strong>${c.data.length}</strong> 班</div>
+            <div>·</div>
+            <div>已報名 <strong>${state.registrations.filter(r=>r.category===k).length}</strong> 人</div>
+          </div>
+          <div class="arrow">→</div>
+        </article>`).join("")}
+    </div>
+
+    <div class="section-title"><h2>報名時程表</h2><span class="sub">關鍵日期</span></div>
+    <div class="card timeline">
+      <div class="tl-grid">
+        ${TIMELINE.map(t=>`
+          <div class="tl-row ${t.highlight?"highlight":""}">
+            <div class="tl-stage ${t.cls}">${t.stage}</div>
+            <div class="tl-task">${t.task}</div>
+            <div class="tl-date">${t.date}</div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+
+    <div class="section-title"><h2>注意事項</h2></div>
+    <div class="card" style="padding:22px 26px">
+      <ul style="margin:0; padding-left:18px; line-height:2; font-size:14px">
+        <li>每位學生可報名多個 <strong>不同時段</strong> 的社團，同一時段僅能擇一報名。</li>
+        <li>低收入戶子女學費減半（須繳材料費），每人限報一班；管樂、弦樂社團不適用。</li>
+        <li>報名後一旦繳費完成 <strong>不得轉換社團</strong>，請審慎選擇。</li>
+        <li>管樂團、弦樂團報名請洽訓育組（02-2557-0309 轉 1022）。</li>
+      </ul>
+    </div>
+
+    <p class="muted" style="text-align:center; margin-top:36px; font-size:12.5px">
+      © 臺北市立雙蓮國民小學　學務處・訓育組｜地址：臺北市大同區錦西街51號
+    </p>
+  </div>`;
+}
+function afterHome(){
+  $$(".entry").forEach(el=>el.addEventListener("click", ()=>{
+    go("list", { category: el.dataset.cat, filterDay:"全部", filterType:"all", search:"" });
+  }));
+}
+
+/* ═══════════════════════════════════════════════════
+   VIEW: Club List
+   ═══════════════════════════════════════════════════ */
+function viewList(){
+  const cat = CATEGORIES[state.category];
+  const days = cat.showDay ? ["全部","週一","週二","週三","週四","週五"] : ["全部","A時段","B時段","C時段","D時段"];
+  return `
+  <div class="view">
+    <div style="display:flex; gap:10px; align-items:center; margin-bottom:14px">
+      <button class="btn btn-ghost" id="back2home">← 回首頁</button>
+      <span class="muted">/</span>
+      <span style="font-weight:600">${cat.title}</span>
+    </div>
+
+    <div class="section-title"><h2>步驟 1 ・ 選擇社團</h2><span class="sub">${cat.data.length} 班可報名</span></div>
+
+    <div class="toolbar">
+      <div class="search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input id="searchBox" placeholder="搜尋社團名稱、教師…" value="${escapeHtml(state.search)}">
+      </div>
+      <div class="chips" id="dayChips">
+        ${days.map(d=>`<button class="chip ${state.filterDay===d?"active":""}" data-day="${d}">${d}</button>`).join("")}
+      </div>
+      <div class="chips" id="typeChips">
+        ${[["all","全部類別"],["sport","🏃 體育"],["art","🎨 藝文"]].map(([k,lbl])=>`<button class="chip ${state.filterType===k?"active":""}" data-type="${k}">${lbl}</button>`).join("")}
+      </div>
+    </div>
+
+    <div id="clubGrid"></div>
+  </div>`;
+}
+function renderClubGrid(){
+  const cat = CATEGORIES[state.category];
+  const grid = $("#clubGrid");
+  if (!grid) return;
+  let list = cat.data.slice();
+  if (state.filterDay !== "全部") {
+    list = list.filter(c => cat.showDay ? c.day===state.filterDay : c.time.startsWith(state.filterDay));
+  }
+  if (state.filterType !== "all") list = list.filter(c => c.type===state.filterType);
+  if (state.search.trim()) {
+    const q = state.search.trim().toLowerCase();
+    list = list.filter(c => (c.name+c.teacher+c.location).toLowerCase().includes(q));
+  }
+  if (!list.length){
+    grid.innerHTML = `<div class="empty"><div class="ico">🔍</div>找不到符合條件的社團，請調整篩選。</div>`;
+    return;
+  }
+  grid.innerHTML = `<div class="club-grid">${list.map(c=>{
+    const taken = spotsTaken(c.id);
+    const remain = Math.max(0, c.spots - taken);
+    const pct = Math.min(100, Math.round(taken/c.spots*100));
+    const full = remain<=0;
+    const stat = full?"full": (remain<=3?"warn":"");
+    const typeLbl = c.type==="sport"?"體育":"藝文";
+    return `
+    <article class="club ${full?"full":""}">
+      <div class="head">
+        <div class="name">${escapeHtml(c.name)}</div>
+        <div class="price">${fmt$(c.total)}</div>
+      </div>
+      <div class="meta">
+        ${cat.showDay ? `<span class="lbl">時間</span><span>${c.day} ${c.time}</span>`
+                     : `<span class="lbl">時段</span><span>${c.time}</span>`}
+        <span class="lbl">教師</span><span>${escapeHtml(c.teacher)}</span>
+        <span class="lbl">地點</span><span>${escapeHtml(c.location)}</span>
+        <span class="lbl">招收</span><span>${escapeHtml(c.grade)}</span>
+      </div>
+      <div class="tags">
+        <span class="tag ${c.type}">${typeLbl}</span>
+        ${c.isNew?'<span class="tag new">新增</span>':""}
+        ${full?'<span class="tag full">額滿</span>':""}
+      </div>
+      ${c.note?`<div class="note">${escapeHtml(c.note)}</div>`:""}
+      <div class="footer">
+        <div class="spots ${stat}">
+          <div class="bar"><i style="width:${pct}%"></i></div>
+          <span>${taken}/${c.spots}</span>
+        </div>
+        <button class="btn ${full?"":"btn-primary"} btn-sm" data-pick="${c.id}" ${full?"disabled":""}>${full?"額滿":"我要報名 →"}</button>
+      </div>
+    </article>`;
+  }).join("")}</div>`;
+  $$("[data-pick]").forEach(b=>b.addEventListener("click", e=>{
+    const club = findClub(e.currentTarget.dataset.pick);
+    go("form", { selectedClub:club, formData:{} });
+  }));
+}
+function afterList(){
+  $("#back2home").onclick = ()=>go("home");
+  $("#searchBox").addEventListener("input", e=>{ state.search = e.target.value; renderClubGrid(); });
+  $$("#dayChips .chip").forEach(c=>c.onclick=()=>{ state.filterDay=c.dataset.day; afterList._refreshChips("dayChips","filterDay","day"); renderClubGrid(); });
+  $$("#typeChips .chip").forEach(c=>c.onclick=()=>{ state.filterType=c.dataset.type; afterList._refreshChips("typeChips","filterType","type"); renderClubGrid(); });
+  renderClubGrid();
+}
+afterList._refreshChips = (rootId, stateKey, dataKey)=>{
+  $$("#"+rootId+" .chip").forEach(c=>c.classList.toggle("active", c.dataset[dataKey]===state[stateKey]));
+};
+
+/* ═══════════════════════════════════════════════════
+   VIEW: Form
+   ═══════════════════════════════════════════════════ */
+function viewForm(){
+  const club = state.selectedClub;
+  const cat = CATEGORIES[state.category];
+  const fd = state.formData;
+  return `
+  <div class="view">
+    ${stepsHtml(2)}
+
+    <div class="section-title">
+      <h2>步驟 2 ・ 填寫報名表單</h2>
+      <span class="sub">${escapeHtml(club.name)}</span>
+    </div>
+
+    <div class="card form-card">
+      <div class="warn-box">
+        <div class="ico">⚠️</div>
+        <div>
+          <strong>請填寫 114 學年度（現在）的班級與座號</strong><br>
+          升上 115 學年度後班級座號可能異動，本次報名請填寫目前就讀之班級座號。
+        </div>
+      </div>
+
+      <div class="fset">
+        <h4>學生資料</h4>
+        <div class="frow">
+          <div class="field">
+            <label>班級<span class="req">*</span></label>
+            <select id="f-class">
+              <option value="">— 請選擇 —</option>
+              ${classOptions(state.category, fd.classNo||"")}
+            </select>
+            <div class="hint">請選擇 114 學年度現在的班級</div>
+          </div>
+          <div class="field">
+            <label>座號<span class="req">*</span></label>
+            <select id="f-seat">
+              <option value="">— 請選擇 —</option>
+              ${state.category==="grade1"?'<option value="—">尚未編號</option>': Array.from({length:40},(_,i)=>{
+                const v = String(i+1).padStart(2,"0");
+                return `<option ${fd.seatNo===v?"selected":""} value="${v}">${v}</option>`;
+              }).join("")}
+            </select>
+            <div class="hint">請選擇 114 學年度現在的座號</div>
+          </div>
+          <div class="field full">
+            <label>學生姓名<span class="req">*</span></label>
+            <input id="f-student" type="text" placeholder="如：王小明" value="${escapeHtml(fd.studentName||"")}">
+          </div>
+        </div>
+      </div>
+
+      <div class="fset">
+        <h4>聯絡人資料</h4>
+        <div class="frow">
+          <div class="field">
+            <label>聯絡人姓名<span class="req">*</span></label>
+            <input id="f-contact" type="text" placeholder="如：王大明" value="${escapeHtml(fd.contactName||"")}">
+          </div>
+          <div class="field">
+            <label>聯絡人電話<span class="req">*</span></label>
+            <input id="f-phone" type="tel" placeholder="0912345678" maxlength="10" value="${escapeHtml(fd.contactPhone||"")}">
+            <div class="hint">請輸入台灣手機號碼 09xxxxxxxx</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fset">
+        <h4>注意事項確認</h4>
+        <div class="checks">
+          <label class="check"><input type="checkbox" id="f-agree1" ${fd.agree1?"checked":""}><span>我已閱讀並同意 <strong>社團招生簡章規定</strong>（含退費、請假等規定）</span></label>
+          <label class="check"><input type="checkbox" id="f-agree2" ${fd.agree2?"checked":""}><span>我了解 <strong>一旦繳費後不得轉換社團</strong></span></label>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn" id="form-back">← 返回選擇</button>
+        <button class="btn btn-primary btn-lg" id="form-next">下一步 ・ 確認資料 →</button>
+      </div>
+    </div>
+
+    <div style="margin-top:14px" class="card" >
+      <div style="padding:16px 20px; display:grid; grid-template-columns:1fr 1fr; gap:8px 18px; font-size:13.5px">
+        <div class="muted">社團</div><div><strong>${escapeHtml(club.name)}</strong></div>
+        <div class="muted">時間</div><div>${cat.showDay?club.day+" ":""}${club.time}</div>
+        <div class="muted">教師 / 地點</div><div>${escapeHtml(club.teacher)} ・ ${escapeHtml(club.location)}</div>
+        <div class="muted">費用</div><div><strong>${fmt$(club.total)}</strong>（學費 ${fmt$(club.tuition)}${club.material?` + 材料費 ${fmt$(club.material)}`:""}）</div>
+      </div>
+    </div>
+  </div>`;
+}
+function afterForm(){
+  $("#form-back").onclick = ()=>go("list");
+  $("#form-next").onclick = submitForm;
+}
+function submitForm(){
+  const f = {
+    classNo: $("#f-class").value,
+    seatNo: $("#f-seat").value,
+    studentName: $("#f-student").value.trim(),
+    contactName: $("#f-contact").value.trim(),
+    contactPhone: $("#f-phone").value.trim(),
+    agree1: $("#f-agree1").checked,
+    agree2: $("#f-agree2").checked,
+  };
+  let bad = false;
+  $$(".field").forEach(el=>el.classList.remove("bad"));
+  if (!f.classNo){ $("#f-class").parentElement.classList.add("bad"); bad=true; }
+  if (!f.seatNo){ $("#f-seat").parentElement.classList.add("bad"); bad=true; }
+  if (!f.studentName){ $("#f-student").parentElement.classList.add("bad"); bad=true; }
+  if (!f.contactName){ $("#f-contact").parentElement.classList.add("bad"); bad=true; }
+  if (!/^09\d{8}$/.test(f.contactPhone)){ $("#f-phone").parentElement.classList.add("bad"); bad=true; }
+  if (!f.agree1 || !f.agree2){ alert("請勾選兩項注意事項確認"); bad=true; }
+  if (bad) { window.scrollTo({top:0, behavior:"smooth"}); return; }
+  state.formData = f;
+  go("confirm");
+}
+
+/* ═══════════════════════════════════════════════════
+   VIEW: Confirm
+   ═══════════════════════════════════════════════════ */
+function viewConfirm(){
+  const club = state.selectedClub;
+  const cat = CATEGORIES[state.category];
+  const f = state.formData;
+  return `
+  <div class="view">
+    ${stepsHtml(3)}
+    <div class="section-title"><h2>步驟 3 ・ 確認報名資料</h2><span class="sub">送出後將無法修改</span></div>
+
+    <div class="card summary">
+      <h3>📌 報名社團</h3>
+      <div class="grp">
+        <div class="k">類別</div><div class="v">${cat.title}</div>
+        <div class="k">社團名稱</div><div class="v"><strong>${escapeHtml(club.name)}</strong></div>
+        <div class="k">上課時間</div><div class="v">${cat.showDay?club.day+" ":""}${club.time}</div>
+        <div class="k">授課教師</div><div class="v">${escapeHtml(club.teacher)}</div>
+        <div class="k">上課地點</div><div class="v">${escapeHtml(club.location)}</div>
+      </div>
+      <div class="divider"></div>
+      <h3>👤 學生資料</h3>
+      <div class="grp">
+        <div class="k">班級／座號</div><div class="v">${escapeHtml(f.classNo)} 班 ・ ${escapeHtml(f.seatNo)} 號</div>
+        <div class="k">姓名</div><div class="v">${escapeHtml(f.studentName)}</div>
+        <div class="k">聯絡人</div><div class="v">${escapeHtml(f.contactName)} ・ ${escapeHtml(f.contactPhone)}</div>
+      </div>
+      <div class="divider"></div>
+      <h3>💰 費用明細</h3>
+      <div style="padding:0 4px">
+        <div class="fee-line"><span>學費</span><span>${fmt$(club.tuition)}</span></div>
+        ${club.material?`<div class="fee-line"><span>材料費</span><span>${fmt$(club.material)}</span></div>`:""}
+        <div class="fee-line total"><span>總計</span><span>${fmt$(club.total)}</span></div>
+      </div>
+
+      <div class="terms">
+        <b>📜 簡章重點摘錄</b>
+        <ol>
+          <li>退費：開課前申請扣學費10%；未逾1/3扣1/3；逾1/3未達2/3退1/3；超過2/3不退費。學校未開班全額退費。</li>
+          <li>低收入戶學費減半（須繳材料費），每人限報一班；管樂、弦樂不適用。</li>
+          <li>請假不退費。請假專線：02-2557-0309 轉 1022。</li>
+          <li>遇颱風等天災停課，於學期末退費。</li>
+        </ol>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn" id="back2form">← 修改</button>
+        <button class="btn btn-success btn-lg" id="submitFinal">✓ 確認送出報名</button>
+      </div>
+    </div>
+  </div>`;
+}
+function afterConfirm(){
+  $("#back2form").onclick = ()=>go("form");
+  $("#submitFinal").onclick = ()=>{
+    const club = state.selectedClub;
+    const f = state.formData;
+    // capacity recheck
+    if (spotsTaken(club.id) >= club.spots){
+      alert("很抱歉，此社團已額滿，請重新選擇其他社團。");
+      return go("list");
+    }
+    // duplicate-time conflict check (single category only)
+    const dupTime = state.registrations.find(r=>{
+      if (r.classNo!==f.classNo || r.seatNo!==f.seatNo || r.studentName!==f.studentName) return false;
+      const c2 = findClub(r.clubId);
+      if (!c2) return false;
+      if (c2.id===club.id) return true;
+      // same category + same day/time slot
+      if (r.category===state.category){
+        if (CATEGORIES[state.category].showDay){
+          return c2.day===club.day && c2.time===club.time;
+        } else {
+          return c2.time===club.time;
+        }
+      }
+      return false;
+    });
+    if (dupTime){
+      if (dupTime.clubId===club.id){
+        if (!confirm("此學生已報名同一社團，確定再次送出？")) return;
+      } else {
+        if (!confirm("此學生已報名同一時段的另一社團，確定仍要送出？")) return;
+      }
+    }
+    const reg = {
+      id: nextRegId(state.category),
+      category: state.category,
+      clubId: club.id, clubName: club.name,
+      classNo: f.classNo, seatNo: f.seatNo, studentName: f.studentName,
+      contactName: f.contactName, contactPhone: f.contactPhone,
+      totalFee: club.total, agreedTerms:true,
+      timestamp: new Date().toISOString(), status:"pending",
+    };
+    state.registrations.push(reg);
+    saveRegs();
+    state.myReg = reg;
+    go("done");
+  };
+}
+
+/* ═══════════════════════════════════════════════════
+   VIEW: Done
+   ═══════════════════════════════════════════════════ */
+function viewDone(){
+  const r = state.myReg;
+  const club = findClub(r.clubId);
+  return `
+  <div class="view">
+    ${stepsHtml(4)}
+    <div class="card done-card">
+      <div class="done-icon">✓</div>
+      <h2>報名成功！</h2>
+      <div class="muted">您的報名編號為</div>
+      <div class="reg-id">${r.id}</div>
+      <div class="next">請於 <strong style="color:var(--accent)">6/8（一）繳費截止日</strong> 前完成繳費，逾期視同放棄。繳費單將於 6/4（四）發放。</div>
+
+      <div class="notice-card">
+        <strong>📋 報名摘要</strong><br>
+        ${escapeHtml(r.studentName)}（${escapeHtml(r.classNo)} 班 ${escapeHtml(r.seatNo)} 號）<br>
+        ${escapeHtml(r.clubName)} ・ ${escapeHtml(club.time)}<br>
+        應繳費用：<strong>${fmt$(r.totalFee)}</strong>
+      </div>
+
+      <div style="display:flex; gap:10px; justify-content:center; margin-top:20px; flex-wrap:wrap">
+        <button class="btn" id="goHome">← 回首頁</button>
+        <button class="btn btn-primary" id="goAgain">繼續報名其他社團 →</button>
+      </div>
+    </div>
+  </div>`;
+}
+function afterDone(){
+  $("#goHome").onclick = ()=>go("home");
+  $("#goAgain").onclick = ()=>go("list", { search:"", filterDay:"全部", filterType:"all" });
+}
+
+/* ═══════════════════════════════════════════════════
+   VIEW: My registrations (local)
+   ═══════════════════════════════════════════════════ */
+function viewMy(){
+  return `
+  <div class="view">
+    <div class="section-title"><h2>我的報名</h2><span class="sub">查詢您於本機提交的報名紀錄</span></div>
+    <div class="card" style="padding:22px">
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end">
+        <div class="field" style="flex:1; min-width:140px"><label>學生姓名</label><input id="my-name" placeholder="如：王小明"></div>
+        <div class="field" style="width:140px"><label>班級</label><input id="my-class" placeholder="如：101"></div>
+        <div class="field" style="width:120px"><label>座號</label><input id="my-seat" placeholder="如：05"></div>
+        <button class="btn btn-primary" id="my-search">查詢</button>
+      </div>
+      <div id="my-result" style="margin-top:18px"></div>
+    </div>
+  </div>`;
+}
+function afterMy(){
+  $("#my-search").onclick = ()=>{
+    const name = $("#my-name").value.trim();
+    const cls = $("#my-class").value.trim();
+    const seat = $("#my-seat").value.trim();
+    if (!name && !cls){ alert("請至少輸入姓名或班級"); return; }
+    const matches = state.registrations.filter(r =>
+      (!name || r.studentName.includes(name)) &&
+      (!cls || r.classNo===cls) &&
+      (!seat || r.seatNo===seat.padStart(2,"0"))
+    );
+    const out = $("#my-result");
+    if (!matches.length){ out.innerHTML = `<div class="empty">查無報名紀錄</div>`; return; }
+    out.innerHTML = `
+      <div class="table-wrap">
+        <table class="tbl">
+          <thead><tr><th>編號</th><th>類別</th><th>社團</th><th>時間</th><th>學生</th><th class="num">費用</th><th>狀態</th></tr></thead>
+          <tbody>${matches.map(r=>{
+            const c = findClub(r.clubId);
+            return `<tr>
+              <td><code>${r.id}</code></td>
+              <td>${CATEGORIES[r.category].title.replace("社團","")}</td>
+              <td>${escapeHtml(r.clubName)}</td>
+              <td>${c?(c.day||"")+" "+c.time:""}</td>
+              <td>${escapeHtml(r.studentName)} (${r.classNo}/${r.seatNo})</td>
+              <td class="num">${fmt$(r.totalFee)}</td>
+              <td><span class="badge ${r.status==='paid'?'paid':'pending'}">${r.status==='paid'?'已繳費':'待繳費'}</span></td>
+            </tr>`;
+          }).join("")}</tbody>
+        </table>
+      </div>`;
+  };
+}
+
+/* steps */
+function stepsHtml(active){
+  const list = [["1","選擇社團"],["2","填寫資料"],["3","確認報名"],["4","完成"]];
+  return `<div class="steps">${list.map(([n,l],i)=>{
+    const cls = (i+1<active)?"done":(i+1===active?"active":"");
+    return `<div class="step ${cls}"><div class="num">${cls==="done"?"✓":n}</div><div class="lbl">${l}</div>${i<3?'<div class="line"></div>':""}</div>`;
+  }).join("")}</div>`;
+}
+
+/* ═══════════════════════════════════════════════════
+   ADMIN
+   ═══════════════════════════════════════════════════ */
+const ADMIN_TABS = [
+  { k:"dashboard", label:"📊 儀表板" },
+  { k:"regs",      label:"📋 報名名單總覽" },
+  { k:"roster",    label:"📄 各班點名表（列印）" },
+  { k:"notice",    label:"📬 開課通知單" },
+  { k:"summary",   label:"👥 全校學生社團一覽" },
+  { k:"payment",   label:"💰 繳費清單 Excel" },
+  { k:"settings",  label:"⚙️ 設定 / 重設資料" },
+];
+
+function renderAdmin(){
+  const root = $("#root");
+  root.className = ""; // remove container
+  root.innerHTML = `
+    <div class="admin-shell">
+      <aside class="admin-side no-print">
+        <div class="title">後台管理</div>
+        ${ADMIN_TABS.map(t=>`<a data-tab="${t.k}" class="${state.adminTab===t.k?"active":""}">${t.label}</a>`).join("")}
+        <div style="border-top:1px solid var(--line); margin:14px 0; padding-top:10px">
+          <a id="adminExit">← 離開後台</a>
+        </div>
+      </aside>
+      <section class="admin-main">
+        <div class="admin-head no-print">
+          <h2>${ADMIN_TABS.find(t=>t.k===state.adminTab).label.replace(/^[^\s]+\s/,'')}</h2>
+          <div class="muted">雙蓮國小 ・ 115學年度上學期 ・ 後台管理系統</div>
+        </div>
+        <div id="adminBody"></div>
+      </section>
+    </div>`;
+  $$(".admin-side a[data-tab]").forEach(a=>a.onclick=()=>{ state.adminTab=a.dataset.tab; renderAdmin(); });
+  $("#adminExit").onclick = ()=>{ state.isAdmin=false; go("home"); };
+  const body = $("#adminBody");
+  switch(state.adminTab){
+    case "dashboard": renderDashboard(body); break;
+    case "regs":      renderRegs(body); break;
+    case "roster":    renderRoster(body); break;
+    case "notice":    renderNotice(body); break;
+    case "summary":   renderSummary(body); break;
+    case "payment":   renderPayment(body); break;
+    case "settings":  renderSettings(body); break;
+  }
+}
+
+function renderDashboard(body){
+  const all = state.registrations;
+  const totalRevenue = all.reduce((s,r)=>s+r.totalFee, 0);
+  const paidCount = all.filter(r=>r.status==="paid").length;
+  const uniqStudents = new Set(all.map(r=>`${r.classNo}-${r.seatNo}-${r.studentName}`)).size;
+  body.innerHTML = `
+    <div class="kpi-row">
+      <div class="kpi"><div class="lbl">總報名筆數</div><div class="val">${all.length}</div><div class="sub">含三類社團</div></div>
+      <div class="kpi"><div class="lbl">不重複學生</div><div class="val">${uniqStudents}</div><div class="sub">已參與報名</div></div>
+      <div class="kpi"><div class="lbl">已繳費</div><div class="val">${paidCount}</div><div class="sub">/ ${all.length} 筆</div></div>
+      <div class="kpi"><div class="lbl">應收金額</div><div class="val">${(totalRevenue/1000).toFixed(1)}k</div><div class="sub">${fmt$(totalRevenue)}</div></div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-card full"><h3>各社團報名人數 vs 名額</h3><canvas id="ch1"></canvas></div>
+      <div class="chart-card"><h3>各星期報名人數分佈</h3><canvas id="ch2"></canvas></div>
+      <div class="chart-card"><h3>每日新增報名</h3><canvas id="ch3"></canvas></div>
+    </div>`;
+  // ── chart 1: stacked horizontal bar (taken vs remain) for each 115 club
+  const ctx1 = $("#ch1").getContext("2d");
+  const labels = clubs_115.map(c=>c.name);
+  const taken = clubs_115.map(c=>spotsTaken(c.id));
+  const remain = clubs_115.map((c,i)=>Math.max(0,c.spots-taken[i]));
+  new Chart(ctx1, {
+    type:"bar",
+    data:{ labels, datasets:[
+      { label:"已報名", data:taken, backgroundColor:"#1a5fa8", stack:"a" },
+      { label:"剩餘名額", data:remain, backgroundColor:"#cfd8e3", stack:"a" },
+    ]},
+    options:{ indexAxis:"y", responsive:true, maintainAspectRatio:false,
+      scales:{ x:{stacked:true, ticks:{font:{size:11}}}, y:{stacked:true, ticks:{font:{size:10}}} },
+      plugins:{ legend:{position:"bottom"} }
+    },
+  });
+  $("#ch1").parentElement.style.height = "560px";
+  // ── chart 2: pie by day
+  const days = ["週一","週二","週三","週四","週五"];
+  const dayCounts = days.map(d => state.registrations.filter(r=>{ const c=findClub(r.clubId); return c && c.day===d; }).length);
+  new Chart($("#ch2"), {
+    type:"doughnut",
+    data:{ labels:days, datasets:[{ data:dayCounts, backgroundColor:["#1a5fa8","#3a8bd8","#7c5dc8","#e05c2a","#1e8a5e"] }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{position:"bottom"} } },
+  });
+  // ── chart 3: line by date
+  const byDate = {};
+  all.forEach(r=>{
+    const d = r.timestamp.slice(5,10);
+    byDate[d] = (byDate[d]||0)+1;
+  });
+  const ds = Object.keys(byDate).sort();
+  new Chart($("#ch3"), {
+    type:"line",
+    data:{ labels:ds, datasets:[{ label:"新增報名", data:ds.map(d=>byDate[d]), borderColor:"#1a5fa8", backgroundColor:"rgba(26,95,168,.15)", fill:true, tension:.3 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} } },
+  });
+}
+
+function renderRegs(body){
+  body.innerHTML = `
+    <div class="table-wrap">
+      <div class="table-head">
+        <div>
+          <div style="font-weight:600">所有報名資料</div>
+          <div class="muted" style="font-size:12.5px">共 ${state.registrations.length} 筆</div>
+        </div>
+        <div style="display:flex; gap:8px">
+          <select id="rg-cat" class="btn btn-sm" style="padding:6px 10px">
+            <option value="">全部類別</option>
+            ${Object.entries(CATEGORIES).map(([k,c])=>`<option value="${k}">${c.title}</option>`).join("")}
+          </select>
+          <input id="rg-q" placeholder="搜尋姓名/班級/社團" class="btn btn-sm" style="padding:6px 10px; min-width:200px; text-align:left">
+          <button class="btn btn-sm" id="rg-csv">匯出 CSV</button>
+        </div>
+      </div>
+      <div style="max-height:60vh; overflow:auto">
+        <table class="tbl" id="rg-tbl">
+          <thead><tr>
+            <th>報名編號</th><th>類別</th><th>班級</th><th>座號</th><th>姓名</th><th>社團</th><th>時間</th>
+            <th class="num">費用</th><th>聯絡人</th><th>電話</th><th>狀態</th><th>動作</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>`;
+  function refresh(){
+    const cat = $("#rg-cat").value;
+    const q = $("#rg-q").value.trim().toLowerCase();
+    const rows = state.registrations.filter(r =>
+      (!cat || r.category===cat) &&
+      (!q || (r.studentName+r.classNo+r.clubName+r.contactName).toLowerCase().includes(q))
+    ).sort((a,b)=> a.classNo.localeCompare(b.classNo) || a.seatNo.localeCompare(b.seatNo));
+    $("#rg-tbl tbody").innerHTML = rows.map(r=>{
+      const c = findClub(r.clubId);
+      return `<tr>
+        <td><code>${r.id}</code></td>
+        <td>${CATEGORIES[r.category].emoji} ${CATEGORIES[r.category].title.replace("社團","").replace(" ","")}</td>
+        <td>${escapeHtml(r.classNo)}</td>
+        <td>${escapeHtml(r.seatNo)}</td>
+        <td>${escapeHtml(r.studentName)}</td>
+        <td>${escapeHtml(r.clubName)}</td>
+        <td>${c?(c.day||"")+" "+c.time:""}</td>
+        <td class="num">${fmt$(r.totalFee)}</td>
+        <td>${escapeHtml(r.contactName)}</td>
+        <td>${escapeHtml(r.contactPhone)}</td>
+        <td><span class="badge ${r.status==='paid'?'paid':'pending'}">${r.status==='paid'?'已繳費':'待繳費'}</span></td>
+        <td>
+          <button class="btn btn-sm" data-toggle="${r.id}">${r.status==='paid'?'設待繳':'設已繳'}</button>
+          <button class="btn btn-sm" data-del="${r.id}" style="color:var(--danger)">刪除</button>
+        </td>
+      </tr>`;
+    }).join("");
+    $$("[data-toggle]").forEach(b=>b.onclick=e=>{
+      const id=e.currentTarget.dataset.toggle;
+      const r=state.registrations.find(x=>x.id===id); r.status = r.status==="paid"?"pending":"paid";
+      saveRegs(); refresh();
+    });
+    $$("[data-del]").forEach(b=>b.onclick=e=>{
+      const id=e.currentTarget.dataset.del;
+      if (!confirm("確定刪除此報名紀錄？")) return;
+      state.registrations = state.registrations.filter(x=>x.id!==id);
+      saveRegs(); refresh();
+    });
+  }
+  $("#rg-cat").onchange = refresh;
+  $("#rg-q").oninput = refresh;
+  $("#rg-csv").onclick = ()=>{
+    const head = ["報名編號","類別","班級","座號","姓名","社團","時間","費用","聯絡人","電話","狀態","報名時間"];
+    const lines = [head.join(",")];
+    state.registrations.forEach(r=>{
+      const c = findClub(r.clubId);
+      lines.push([r.id, CATEGORIES[r.category].title, r.classNo, r.seatNo, r.studentName, r.clubName, c?(c.day||"")+" "+c.time:"", r.totalFee, r.contactName, r.contactPhone, r.status, r.timestamp].map(s=>`"${String(s||"").replace(/"/g,'""')}"`).join(","));
+    });
+    downloadFile("報名名單.csv", "\ufeff"+lines.join("\n"), "text/csv");
+  };
+  refresh();
+}
+
+function renderRoster(body){
+  body.innerHTML = `
+    <div class="table-wrap">
+      <div class="table-head">
+        <div style="font-weight:600">點名表列印</div>
+        <div style="display:flex; gap:8px; align-items:center">
+          <select id="rs-club" class="btn btn-sm" style="padding:6px 10px; min-width:280px">
+            ${clubs_115.map(c=>`<option value="${c.id}">${c.day} ${c.time} ・ ${c.name}（${spotsTaken(c.id)}人）</option>`).join("")}
+          </select>
+          <button class="btn btn-sm" id="rs-preview">預覽</button>
+          <button class="btn btn-primary btn-sm" id="rs-print">🖨 列印 / 存 PDF</button>
+        </div>
+      </div>
+      <div id="rs-preview-area" style="padding:24px; background:#f1f3f5"></div>
+    </div>`;
+  function buildSheet(clubId){
+    const c = findClub(clubId);
+    const rows = state.registrations.filter(r=>r.clubId===clubId)
+      .sort((a,b)=> a.classNo.localeCompare(b.classNo) || a.seatNo.localeCompare(b.seatNo));
+    const sessions = (CLASS_START[c.day]||[]).slice(0, c.sessions);
+    const sessHead = sessions.map((d,i)=>`<th><div style="font-size:10px; color:#666">第${i+1}次</div>${d}</th>`).join("");
+    const sessCell = sessions.map(()=>`<td></td>`).join("");
+    return `
+      <div class="roster-sheet print-sheet" style="background:#fff; padding:18mm 14mm; max-width:1100px; margin:0 auto; box-shadow:0 4px 14px rgba(0,0,0,.08)">
+        <h1>臺北市雙蓮國小　115學年度上學期　社團點名表</h1>
+        <div class="info">
+          <div><b>社團名稱：</b>${escapeHtml(c.name)}</div>
+          <div><b>授課教師：</b>${escapeHtml(c.teacher)}</div>
+          <div><b>上課時間：</b>${c.day} ${c.time}</div>
+          <div><b>上課地點：</b>${escapeHtml(c.location)}</div>
+          <div><b>開始日期：</b>${sessions[0]||"待定"}</div>
+          <div><b>上課次數：</b>共 ${c.sessions} 次</div>
+        </div>
+        <table>
+          <thead><tr><th style="width:4%">序</th><th style="width:7%">班級</th><th style="width:7%">座號</th><th style="width:11%">姓名</th>${sessHead}<th style="width:10%">備註</th></tr></thead>
+          <tbody>
+            ${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(r.classNo)}</td><td>${escapeHtml(r.seatNo)}</td><td style="text-align:left; padding-left:8px">${escapeHtml(r.studentName)}</td>${sessCell}<td></td></tr>`).join("")}
+            ${Array.from({length: Math.max(0, c.spots-rows.length)}).map((_,i)=>`<tr><td>${rows.length+i+1}</td><td></td><td></td><td></td>${sessCell}<td></td></tr>`).join("")}
+          </tbody>
+        </table>
+        <div class="foot"><div>共 ${rows.length} 人</div><div>列印日期：____ 年 __ 月 __ 日</div></div>
+      </div>`;
+  }
+  $("#rs-preview").onclick = ()=>{ $("#rs-preview-area").innerHTML = buildSheet($("#rs-club").value); };
+  $("#rs-print").onclick = ()=>{
+    $("#printRegion").innerHTML = buildSheet($("#rs-club").value);
+    setTimeout(()=>window.print(), 100);
+  };
+  // initial preview
+  $("#rs-preview-area").innerHTML = buildSheet(clubs_115[0].id);
+}
+
+function renderNotice(body){
+  body.innerHTML = `
+    <div class="table-wrap">
+      <div class="table-head">
+        <div style="font-weight:600">開課通知單列印</div>
+        <div style="display:flex; gap:8px; align-items:center">
+          <select id="nt-day" class="btn btn-sm" style="padding:6px 10px">
+            <option value="all">全部星期一次列印</option>
+            ${["週一","週二","週三","週四","週五"].map(d=>`<option value="${d}">${d}</option>`).join("")}
+          </select>
+          <button class="btn btn-sm" id="nt-preview">預覽</button>
+          <button class="btn btn-primary btn-sm" id="nt-print">🖨 列印 / 存 PDF</button>
+        </div>
+      </div>
+      <div id="nt-preview-area" style="padding:24px; background:#f1f3f5"></div>
+    </div>`;
+  function buildNotice(day){
+    const regs = state.registrations.filter(r=>{
+      if (r.category!=="115") return false;
+      const c = findClub(r.clubId); if (!c) return false;
+      return day==="all" ? true : c.day===day;
+    }).sort((a,b)=> a.classNo.localeCompare(b.classNo) || a.seatNo.localeCompare(b.seatNo));
+    if (!regs.length) return `<div class="empty">該日無開課通知單</div>`;
+    const slips = regs.map(r=>{
+      const c = findClub(r.clubId);
+      const startDate = (CLASS_START[c.day]||[])[0]||"待定";
+      const dayMap = {"週一":"一","週二":"二","週三":"三","週四":"四","週五":"五"};
+      return `
+        <div class="notice-slip" style="background:#fff; padding:18px 22px; border:2px solid var(--primary); border-radius:8px; margin-bottom:14px">
+          <h2>臺北市雙蓮國小　115學年度上學期</h2>
+          <h2 style="margin-top:0">社團課程開課通知單</h2>
+          <div class="sub">親愛的 <u>${escapeHtml(r.classNo)}</u> 班 <u>${escapeHtml(r.seatNo)}</u> 號 <u>${escapeHtml(r.studentName)}</u> 同學的家長，您好：</div>
+          <div style="margin:6px 0 10px; font-size:12.5px">您的孩子已完成報名以下社團，請於開課前確認相關事項：</div>
+          <div class="row">
+            <div class="l">▸ 社團名稱</div><div>${escapeHtml(c.name)}</div>
+            <div class="l">▸ 上課時間</div><div>週${dayMap[c.day]}　${c.time}</div>
+            <div class="l">▸ 開始日期</div><div>115年 ${startDate.replace("/"," 月 ")} 日</div>
+            <div class="l">▸ 上課地點</div><div>${escapeHtml(c.location)}</div>
+            <div class="l">▸ 授課教師</div><div>${escapeHtml(c.teacher)}</div>
+            <div class="l">▸ 上課次數</div><div>${c.sessions} 次</div>
+            <div class="l">▸ 費　　用</div><div>學費 ${fmt$(c.tuition)}　${c.material?`／材料費 ${fmt$(c.material)}（另收）`:""}　／合計 ${fmt$(c.total)}</div>
+          </div>
+          <div class="warn">
+            ⚠️ 注意事項：<br>
+            □ 請準備上課所需材料（${escapeHtml(c.note||"詳見備註欄")}）<br>
+            □ 請假請事先聯絡學務處 02-2557-0309 轉 1022<br>
+            □ 請家長負責接送安全
+          </div>
+          <div style="text-align:right; font-size:12px; margin-top:6px; color:#555">學務處　敬上　・　115年 9月</div>
+        </div>`;
+    }).join("");
+    return `<div class="print-sheet" style="max-width:920px; margin:0 auto">${slips}</div>`;
+  }
+  $("#nt-preview").onclick = ()=>{ $("#nt-preview-area").innerHTML = buildNotice($("#nt-day").value); };
+  $("#nt-print").onclick = ()=>{
+    $("#printRegion").innerHTML = buildNotice($("#nt-day").value);
+    setTimeout(()=>window.print(), 100);
+  };
+  $("#nt-preview-area").innerHTML = buildNotice("all");
+}
+
+function renderSummary(body){
+  // group registrations by student
+  const byStudent = {};
+  state.registrations.forEach(r=>{
+    const k = `${r.classNo}|${r.seatNo}|${r.studentName}`;
+    (byStudent[k] ||= []).push(r);
+  });
+  const rows = Object.values(byStudent).sort((a,b)=>{
+    const A = a[0], B = b[0];
+    return A.classNo.localeCompare(B.classNo) || A.seatNo.localeCompare(B.seatNo);
+  });
+  body.innerHTML = `
+    <div class="table-wrap">
+      <div class="table-head">
+        <div>
+          <div style="font-weight:600">全校學生社團一覽</div>
+          <div class="muted" style="font-size:12.5px">共 ${rows.length} 位學生報名</div>
+        </div>
+        <button class="btn btn-sm" id="sm-csv">匯出 CSV</button>
+      </div>
+      <div style="max-height:65vh; overflow:auto">
+        <table class="tbl">
+          <thead><tr>
+            <th>班級</th><th>座號</th><th>姓名</th>
+            <th>社團 1</th><th>時間 1</th><th class="num">費用 1</th>
+            <th>社團 2</th><th>時間 2</th><th class="num">費用 2</th>
+            <th>社團 3</th><th class="num">合計</th>
+          </tr></thead>
+          <tbody>
+            ${rows.map(stu=>{
+              const items = stu.slice(0,3).map(r=>{
+                const c = findClub(r.clubId);
+                return { name:r.clubName, time:c?(c.day||"")+" "+c.time:"", fee:r.totalFee };
+              });
+              while (items.length<3) items.push({name:"",time:"",fee:""});
+              const total = stu.reduce((s,r)=>s+r.totalFee,0);
+              return `<tr>
+                <td>${escapeHtml(stu[0].classNo)}</td>
+                <td>${escapeHtml(stu[0].seatNo)}</td>
+                <td>${escapeHtml(stu[0].studentName)}</td>
+                <td>${escapeHtml(items[0].name)}</td><td>${escapeHtml(items[0].time)}</td><td class="num">${items[0].fee?fmt$(items[0].fee):""}</td>
+                <td>${escapeHtml(items[1].name)}</td><td>${escapeHtml(items[1].time)}</td><td class="num">${items[1].fee?fmt$(items[1].fee):""}</td>
+                <td>${escapeHtml(items[2].name)}</td>
+                <td class="num"><strong>${fmt$(total)}</strong></td>
+              </tr>`;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  $("#sm-csv").onclick = ()=>{
+    const head = ["班級","座號","姓名","社團1","時間1","費用1","社團2","時間2","費用2","社團3","時間3","費用3","合計"];
+    const lines=[head.join(",")];
+    rows.forEach(stu=>{
+      const its = stu.slice(0,3).map(r=>{ const c=findClub(r.clubId); return [r.clubName, c?(c.day||"")+" "+c.time:"", r.totalFee]; });
+      while (its.length<3) its.push(["","",""]);
+      const total = stu.reduce((s,r)=>s+r.totalFee,0);
+      lines.push([stu[0].classNo, stu[0].seatNo, stu[0].studentName, ...its.flat(), total].map(s=>`"${String(s||"").replace(/"/g,'""')}"`).join(","));
+    });
+    downloadFile("全校學生社團一覽.csv", "\ufeff"+lines.join("\n"), "text/csv");
+  };
+}
+
+function renderPayment(body){
+  body.innerHTML = `
+    <div class="card" style="padding:24px 28px">
+      <h3 style="margin-top:0">繳費清單 Excel 匯出</h3>
+      <p class="muted">產生符合學校會計規格的 .xlsx 檔案：藍底標題、淡藍底已報名欄、橘底加粗合計欄、千分位數字格式。</p>
+      <div style="display:flex; gap:10px; margin-top:18px">
+        <button class="btn btn-primary" id="pay-115">匯出：115學年度課外社團</button>
+        <button class="btn btn-accent" id="pay-summer">匯出：暑假社團</button>
+        <button class="btn" style="background:var(--purple); color:#fff; border-color:var(--purple)" id="pay-grade1">匯出：小一社團</button>
+        <button class="btn" id="pay-all">匯出：全部（合併）</button>
+      </div>
+
+      <div class="divider"></div>
+      <h4 style="margin:0 0 8px">預覽（115 學年度）</h4>
+      <div id="pay-preview" style="max-height:50vh; overflow:auto; border:1px solid var(--line); border-radius:8px"></div>
+    </div>`;
+  $("#pay-115").onclick = ()=>exportPayment("115");
+  $("#pay-summer").onclick = ()=>exportPayment("summer");
+  $("#pay-grade1").onclick = ()=>exportPayment("grade1");
+  $("#pay-all").onclick = ()=>exportPayment("all");
+  // preview
+  const grid = buildPaymentGrid("115");
+  $("#pay-preview").innerHTML = `
+    <table class="tbl" style="font-size:12px">
+      <thead><tr>${grid.head.map((h,i)=>`<th style="background:#1a5fa8; color:#fff; ${i===grid.head.length-1?'background:#fce5cd; color:#1f2937':''}">${escapeHtml(h)}</th>`).join("")}</tr></thead>
+      <tbody>
+        ${grid.rows.slice(0,30).map(r=>`<tr>${r.map((v,i)=>{
+          if (i<4) return `<td>${escapeHtml(v||"")}</td>`;
+          if (i===r.length-1) return `<td class="num" style="background:#fce5cd; font-weight:700">${v?fmt$(v):"—"}</td>`;
+          return `<td class="num" style="background:${v?'#e8f0fb':'transparent'}">${v?v.toLocaleString():"—"}</td>`;
+        }).join("")}</tr>`).join("")}
+      </tbody>
+    </table>`;
+}
+
+function buildPaymentGrid(category){
+  let pool = state.registrations.slice();
+  let clubList;
+  if (category==="all") clubList = allClubs();
+  else { pool = pool.filter(r=>r.category===category); clubList = CATEGORIES[category].data; }
+  const presentClubs = clubList.filter(c => pool.some(r=>r.clubId===c.id));
+  // group by student
+  const byStudent = {};
+  pool.forEach(r=>{ const k=`${r.classNo}|${r.seatNo}|${r.studentName}`; (byStudent[k] ||= []).push(r); });
+  const stus = Object.values(byStudent).sort((a,b)=>{
+    const A=a[0],B=b[0]; return A.classNo.localeCompare(B.classNo) || A.seatNo.localeCompare(B.seatNo);
+  });
+  const head = ["序號","班級","座號","姓名", ...presentClubs.map(c=>c.name), "合計"];
+  const rows = stus.map((stu,i)=>{
+    const r = stu[0];
+    const map = {}; stu.forEach(x=>map[x.clubId]=x.totalFee);
+    const fees = presentClubs.map(c => map[c.id] || "");
+    const total = stu.reduce((s,x)=>s+x.totalFee,0);
+    return [i+1, r.classNo, r.seatNo, r.studentName, ...fees, total];
+  });
+  return { head, rows, clubs:presentClubs };
+}
+
+function exportPayment(category){
+  const { head, rows } = buildPaymentGrid(category);
+  const titleMap = { "115":"115學年度上學期 社團繳費清單", "summer":"114年度暑假社團 繳費清單", "grade1":"115學年度 小一社團 繳費清單", "all":"115學年度 社團繳費清單（總表）" };
+  const titleRow = ["臺北市雙蓮國小 "+titleMap[category]];
+  const data = [titleRow, [], head, ...rows];
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  // merges
+  ws["!merges"] = [{s:{r:0,c:0}, e:{r:0,c:head.length-1}}];
+  // column widths
+  ws["!cols"] = head.map((h,i)=>({ wch: i<4 ? (i===0?6:i===3?12:8) : (i===head.length-1?12:14) }));
+  // styles via cell-ish — basic XLSX without styles plugin: at least number format
+  for (let r=3; r<data.length; r++){
+    for (let c=4; c<head.length; c++){
+      const v = data[r][c];
+      const ref = XLSX.utils.encode_cell({r, c});
+      if (typeof v === "number" && ws[ref]) ws[ref].z = "#,##0";
+    }
+  }
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "繳費清單");
+  XLSX.writeFile(wb, `雙蓮國小_${titleMap[category]}.xlsx`);
+}
+
+function renderSettings(body){
+  body.innerHTML = `
+    <div class="card" style="padding:24px 28px; max-width:640px">
+      <h3 style="margin-top:0">系統設定</h3>
+      <p class="muted">本系統的所有報名資料儲存於使用者的瀏覽器（localStorage）。</p>
+
+      <div class="divider"></div>
+      <h4>📦 資料管理</h4>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin:12px 0">
+        <button class="btn" id="se-export">下載備份 JSON</button>
+        <button class="btn" id="se-import">匯入備份 JSON</button>
+        <button class="btn" id="se-seed">重新載入示範資料</button>
+        <button class="btn" id="se-clear" style="background:var(--danger); color:#fff; border-color:var(--danger)">⚠ 清空所有報名</button>
+      </div>
+
+      <div class="divider"></div>
+      <h4>🔑 後台密碼</h4>
+      <p class="muted" style="font-size:13px">目前後台密碼：<code>${ADMIN_PASSWORD}</code>（如需更改，請於原始 HTML 修改 <code>ADMIN_PASSWORD</code> 常數）</p>
+    </div>`;
+  $("#se-export").onclick = ()=>downloadFile(`雙蓮國小_報名資料_${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(state.registrations,null,2), "application/json");
+  $("#se-import").onclick = ()=>{
+    const inp = document.createElement("input"); inp.type="file"; inp.accept="application/json";
+    inp.onchange = e=>{
+      const f = e.target.files[0]; if (!f) return;
+      const r = new FileReader();
+      r.onload = ()=>{
+        try {
+          const arr = JSON.parse(r.result);
+          if (!Array.isArray(arr)) throw new Error("格式錯誤");
+          if (!confirm(`即將匯入 ${arr.length} 筆資料，將覆蓋現有資料，確定？`)) return;
+          state.registrations = arr; saveRegs(); alert("匯入成功！"); renderAdmin();
+        } catch(err){ alert("匯入失敗："+err.message); }
+      };
+      r.readAsText(f);
+    };
+    inp.click();
+  };
+  $("#se-seed").onclick = ()=>{ if(confirm("將清空現有資料並載入示範資料，確定？")){ state.registrations=[]; seedDemo(); renderAdmin(); }};
+  $("#se-clear").onclick = ()=>{ if(confirm("確定清空所有報名資料？此動作無法復原。")){ state.registrations=[]; saveRegs(); renderAdmin(); }};
+}
+
+/* ═══════════════════════════════════════════════════
+   Utilities
+   ═══════════════════════════════════════════════════ */
+function downloadFile(name, content, type){
+  const blob = new Blob([content], {type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+/* ═══════════════════════════════════════════════════
+   Boot
+   ═══════════════════════════════════════════════════ */
+$$(".nav-btn").forEach(b=>b.onclick = ()=>go(b.dataset.nav));
+$("#adminGear").onclick = ()=>{
+  if (state.isAdmin) { state.view="admin"; render(); return; }
+  $("#loginModal").classList.add("show");
+  $("#adminPass").value=""; $("#loginErr").style.display="none";
+  setTimeout(()=>$("#adminPass").focus(), 50);
+};
+$("#loginCancel").onclick = ()=>$("#loginModal").classList.remove("show");
+$("#loginOk").onclick = tryLogin;
+$("#adminPass").addEventListener("keydown", e=>{ if(e.key==="Enter") tryLogin(); });
+function tryLogin(){
+  if ($("#adminPass").value === ADMIN_PASSWORD){
+    state.isAdmin=true;
+    $("#loginModal").classList.remove("show");
+    state.view="admin"; render();
+  } else {
+    $("#loginErr").style.display="block";
+  }
+}
+
+if (state.registrations.length === 0) seedDemo();
+render();
+</script>
+</body>
+</html>
