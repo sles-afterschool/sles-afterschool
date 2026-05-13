@@ -621,6 +621,11 @@ const CLASS_START = {
 const STORAGE_KEY = "sles_clubs_v1";
 const ADMIN_PASSWORD = "sles2026";
 
+/* Google Apps Script Web App URL. Leave empty to use localStorage only.
+   Deploy the Apps Script (see README / chat) as a Web App with
+   "Execute as: Me" and "Who has access: Anyone", then paste the /exec URL below. */
+const API_URL = "https://script.google.com/macros/s/AKfycbwVdp5T-eP-iH_P2IUJmcB2ABsg3-M7_9uqJZl5kVgDsPN5iz33sjQsG2RhjCHzuvtS/exec";
+
 const state = {
   view:"home",
   category:"115",
@@ -640,6 +645,35 @@ function loadRegs(){
   catch { return []; }
 }
 function saveRegs(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.registrations)); }
+
+/* ── Remote backend (Google Apps Script) ────────────────────── */
+async function postRemoteReg(reg){
+  if (!API_URL) return { ok:false, skipped:true };
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(reg),
+    });
+    const data = await res.json();
+    return data;
+  } catch(e){
+    console.error("remote save failed", e);
+    return { ok:false, error:String(e) };
+  }
+}
+async function fetchRemoteRegs(){
+  if (!API_URL) return null;
+  try {
+    const res = await fetch(API_URL + "?t=" + Date.now());
+    if (!res.ok) throw new Error("HTTP "+res.status);
+    const arr = await res.json();
+    return Array.isArray(arr) ? arr : null;
+  } catch(e){
+    console.error("remote load failed", e);
+    return null;
+  }
+}
 
 /* Seed demo data on first load so admin views aren't empty (invoked at bottom after helpers are defined) */
 function seedDemo(){
@@ -747,16 +781,18 @@ function viewHome(){
 
     <div class="section-title"><h2>選擇報名類別</h2><span class="sub">請點擊您要報名的項目</span></div>
     <div class="entries">
-      ${Object.entries(CATEGORIES).map(([k,c])=>`
-        <article class="entry ${c.color}" data-cat="${k}">
+      ${Object.entries(CATEGORIES).map(([k,c])=>{
+        const disabled = k==="grade1";
+        return `
+        <article class="entry ${c.color}${disabled?' disabled':''}" ${disabled?'':`data-cat="${k}"`} ${disabled?'aria-disabled="true"':''} style="${disabled?'opacity:.5; cursor:not-allowed; pointer-events:none;':''}">
           <div class="badge">${c.emoji}</div>
           <h3>${c.title}</h3>
           <div class="sub">${c.sub}</div>
           <div class="stat">
-            <div>${k==="115"?"第一階段、第二階段報名": k==="summer"?"第一階段報名":"正式開課：9/7（一）～1/20（三）"}</div>
+            <div>${disabled?"尚未開放報名": k==="115"?"第一階段、第二階段報名": k==="summer"?"第一階段報名":"正式開課：9/7（一）～1/20（三）"}</div>
           </div>
           <div class="arrow">→</div>
-        </article>`).join("")}
+        </article>`;}).join("")}
     </div>
 
     <div class="section-title"><h2>報名時程表</h2></div>
@@ -1068,7 +1104,8 @@ function viewConfirm(){
 }
 function afterConfirm(){
   $("#back2form").onclick = ()=>go("form");
-  $("#submitFinal").onclick = ()=>{
+  $("#submitFinal").onclick = async ()=>{
+    const btn = $("#submitFinal");
     const club = state.selectedClub;
     const f = state.formData;
     // capacity recheck
@@ -1108,6 +1145,16 @@ function afterConfirm(){
       totalFee: club.total, agreedTerms:true,
       timestamp: new Date().toISOString(), status:"pending",
     };
+    // Remote save
+    if (API_URL){
+      btn.disabled = true; btn.textContent = "送出中…";
+      const result = await postRemoteReg(reg);
+      btn.disabled = false; btn.textContent = "✓ 確認送出報名";
+      if (!result.ok){
+        alert("送出失敗，請檢查網路後重試。\n" + (result.error||""));
+        return;
+      }
+    }
     state.registrations.push(reg);
     saveRegs();
     state.myReg = reg;
@@ -1726,8 +1773,15 @@ function tryLogin(){
   }
 }
 
-if (state.registrations.length === 0) seedDemo();
-render();
+(async ()=>{
+  if (API_URL){
+    const remote = await fetchRemoteRegs();
+    if (remote) { state.registrations = remote; saveRegs(); }
+  } else {
+    if (state.registrations.length === 0) seedDemo();
+  }
+  render();
+})();
 </script>
 </body>
 </html>
