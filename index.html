@@ -884,7 +884,6 @@ function renderClubGrid(){
     const pct = Math.min(100, Math.round(taken/c.spots*100));
     const full = remain<=0;
     const stat = full?"full": (remain<=3?"warn":"");
-    const typeLbl = c.type==="sport"?"體育":"藝文";
     return `
     <article class="club ${full?"full":""}">
       <div class="head">
