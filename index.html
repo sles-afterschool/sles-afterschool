@@ -249,8 +249,6 @@ a{color:inherit; text-decoration:none}
 .spots .bar i{display:block; height:100%; background:var(--success); border-radius:999px}
 .spots.warn .bar i{background:var(--warn)}
 .spots.full .bar i{background:var(--danger)}
-.club.full{opacity:.65}
-.club.full .btn-primary{background:#bdc3cb; border-color:#bdc3cb; cursor:not-allowed}
 
 .empty{text-align:center; padding:60px 20px; color:var(--ink-mute)}
 .empty .ico{font-size:38px; margin-bottom:10px}
@@ -674,6 +672,20 @@ async function fetchRemoteRegs(){
     return null;
   }
 }
+async function deleteRemoteReg(id){
+  if (!API_URL) return { ok:true, skipped:true };
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action:"delete", id }),
+    });
+    return await res.json();
+  } catch(e){
+    console.error("remote delete failed", e);
+    return { ok:false, error:String(e) };
+  }
+}
 
 /* Seed demo data on first load so admin views aren't empty (invoked at bottom after helpers are defined) */
 function seedDemo(){
@@ -853,9 +865,6 @@ function viewList(){
       <div class="chips" id="dayChips">
         ${days.map(d=>`<button class="chip ${state.filterDay===d?"active":""}" data-day="${d}">${d}</button>`).join("")}
       </div>
-      <div class="chips" id="typeChips">
-        ${[["all","全部類別"]].map(([k,lbl])=>`<button class="chip ${state.filterType===k?"active":""}" data-type="${k}">${lbl}</button>`).join("")}
-      </div>
     </div>
 
     <div id="clubGrid"></div>
@@ -898,7 +907,6 @@ function renderClubGrid(){
         <span class="lbl">招收</span><span>${escapeHtml(c.grade)}</span>
       </div>
       <div class="tags">
-        <span class="tag ${c.type}">${typeLbl}</span>
         ${c.isNew?'<span class="tag new">新增</span>':""}
         ${full?'<span class="tag full">額滿</span>':""}
       </div>
@@ -908,7 +916,7 @@ function renderClubGrid(){
           <div class="bar"><i style="width:${pct}%"></i></div>
           <span>${taken}/${c.spots}</span>
         </div>
-        <button class="btn ${full?"":"btn-primary"} btn-sm" data-pick="${c.id}" ${full?"disabled":""}>${full?"額滿":"我要報名 →"}</button>
+        <button class="btn btn-primary btn-sm" data-pick="${c.id}">我要報名 →</button>
       </div>
     </article>`;
   }).join("")}</div>`;
@@ -921,7 +929,6 @@ function afterList(){
   $("#back2home").onclick = ()=>go("home");
   $("#searchBox").addEventListener("input", e=>{ state.search = e.target.value; renderClubGrid(); });
   $$("#dayChips .chip").forEach(c=>c.onclick=()=>{ state.filterDay=c.dataset.day; afterList._refreshChips("dayChips","filterDay","day"); renderClubGrid(); });
-  $$("#typeChips .chip").forEach(c=>c.onclick=()=>{ state.filterType=c.dataset.type; afterList._refreshChips("typeChips","filterType","type"); renderClubGrid(); });
   renderClubGrid();
 }
 afterList._refreshChips = (rootId, stateKey, dataKey)=>{
@@ -994,6 +1001,11 @@ function viewForm(){
             <input id="f-phone" type="tel" placeholder="0912345678" maxlength="10" value="${escapeHtml(fd.contactPhone||"")}">
             <div class="hint">請輸入台灣手機號碼 09xxxxxxxx</div>
           </div>
+          <div class="field full">
+            <label>電子郵件<span class="req">*</span></label>
+            <input id="f-email" type="email" placeholder="例如：parent@example.com" value="${escapeHtml(fd.email||"")}">
+            <div class="hint">查詢「我的報名」時需要使用，請務必填寫正確</div>
+          </div>
         </div>
       </div>
 
@@ -1032,6 +1044,7 @@ function submitForm(){
     studentName: $("#f-student").value.trim(),
     contactName: $("#f-contact").value.trim(),
     contactPhone: $("#f-phone").value.trim(),
+    email: $("#f-email").value.trim(),
     agree1: $("#f-agree1").checked,
     agree2: $("#f-agree2").checked,
   };
@@ -1042,6 +1055,7 @@ function submitForm(){
   if (!f.studentName){ $("#f-student").parentElement.classList.add("bad"); bad=true; }
   if (!f.contactName){ $("#f-contact").parentElement.classList.add("bad"); bad=true; }
   if (!/^09\d{8}$/.test(f.contactPhone)){ $("#f-phone").parentElement.classList.add("bad"); bad=true; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)){ $("#f-email").parentElement.classList.add("bad"); bad=true; }
   if (!f.agree1 || !f.agree2){ alert("請勾選兩項注意事項確認"); bad=true; }
   if (bad) { window.scrollTo({top:0, behavior:"smooth"}); return; }
   state.formData = f;
@@ -1075,6 +1089,7 @@ function viewConfirm(){
         <div class="k">班級／座號</div><div class="v">${escapeHtml(f.classNo)} 班 ・ ${escapeHtml(f.seatNo)} 號</div>
         <div class="k">姓名</div><div class="v">${escapeHtml(f.studentName)}</div>
         <div class="k">聯絡人</div><div class="v">${escapeHtml(f.contactName)} ・ ${escapeHtml(f.contactPhone)}</div>
+        <div class="k">電子郵件</div><div class="v">${escapeHtml(f.email)}</div>
       </div>
       <div class="divider"></div>
       <h3>💰 費用明細</h3>
@@ -1107,11 +1122,6 @@ function afterConfirm(){
     const btn = $("#submitFinal");
     const club = state.selectedClub;
     const f = state.formData;
-    // capacity recheck
-    if (spotsTaken(club.id) >= club.spots){
-      alert("很抱歉，此社團已額滿，請重新選擇其他社團。");
-      return go("list");
-    }
     // duplicate-time conflict check (single category only)
     const dupTime = state.registrations.find(r=>{
       if (r.classNo!==f.classNo || r.seatNo!==f.seatNo || r.studentName!==f.studentName) return false;
@@ -1140,7 +1150,7 @@ function afterConfirm(){
       category: state.category,
       clubId: club.id, clubName: club.name,
       classNo: f.classNo, seatNo: f.seatNo, studentName: f.studentName,
-      contactName: f.contactName, contactPhone: f.contactPhone,
+      contactName: f.contactName, contactPhone: f.contactPhone, email: f.email,
       totalFee: club.total, agreedTerms:true,
       timestamp: new Date().toISOString(), status:"pending",
     };
@@ -1202,12 +1212,13 @@ function afterDone(){
 function viewMy(){
   return `
   <div class="view">
-    <div class="section-title"><h2>我的報名</h2><span class="sub">查詢您於本機提交的報名紀錄</span></div>
+    <div class="section-title"><h2>我的報名</h2><span class="sub">請完整輸入下列四項資料以查詢報名紀錄</span></div>
     <div class="card" style="padding:22px">
       <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end">
-        <div class="field" style="flex:1; min-width:140px"><label>學生姓名</label><input id="my-name" placeholder="如：王小明"></div>
-        <div class="field" style="width:140px"><label>班級</label><input id="my-class" placeholder="如：101"></div>
-        <div class="field" style="width:120px"><label>座號</label><input id="my-seat" placeholder="如：05"></div>
+        <div class="field" style="flex:1; min-width:140px"><label>學生姓名<span class="req">*</span></label><input id="my-name" placeholder="如：王小明"></div>
+        <div class="field" style="width:140px"><label>班級<span class="req">*</span></label><input id="my-class" placeholder="如：101"></div>
+        <div class="field" style="width:120px"><label>座號<span class="req">*</span></label><input id="my-seat" placeholder="如：05"></div>
+        <div class="field" style="flex:1; min-width:200px"><label>電子郵件<span class="req">*</span></label><input id="my-email" type="email" placeholder="報名時填寫的 email"></div>
         <button class="btn btn-primary" id="my-search">查詢</button>
       </div>
       <div id="my-result" style="margin-top:18px"></div>
@@ -1215,24 +1226,28 @@ function viewMy(){
   </div>`;
 }
 function afterMy(){
-  $("#my-search").onclick = ()=>{
+  const runSearch = ()=>{
     const name = $("#my-name").value.trim();
     const cls = $("#my-class").value.trim();
     const seat = $("#my-seat").value.trim();
-    if (!name && !cls){ alert("請至少輸入姓名或班級"); return; }
+    const email = $("#my-email").value.trim().toLowerCase();
+    if (!name || !cls || !seat || !email){ alert("請輸入完整的姓名、班級、座號與 email"); return; }
+    const seatNorm = seat.padStart(2,"0");
     const matches = state.registrations.filter(r =>
-      (!name || r.studentName.includes(name)) &&
-      (!cls || r.classNo===cls) &&
-      (!seat || r.seatNo===seat.padStart(2,"0"))
+      String(r.studentName).trim() === name &&
+      String(r.classNo).trim() === cls &&
+      String(r.seatNo).trim() === seatNorm &&
+      String(r.email||"").trim().toLowerCase() === email
     );
     const out = $("#my-result");
     if (!matches.length){ out.innerHTML = `<div class="empty">查無報名紀錄</div>`; return; }
     out.innerHTML = `
       <div class="table-wrap">
         <table class="tbl">
-          <thead><tr><th>編號</th><th>類別</th><th>社團</th><th>時間</th><th>學生</th><th class="num">費用</th><th>狀態</th></tr></thead>
+          <thead><tr><th>編號</th><th>類別</th><th>社團</th><th>時間</th><th>學生</th><th class="num">費用</th><th>狀態</th><th>動作</th></tr></thead>
           <tbody>${matches.map(r=>{
             const c = findClub(r.clubId);
+            const canDelete = r.status !== "paid";
             return `<tr>
               <td><code>${r.id}</code></td>
               <td>${CATEGORIES[r.category].title.replace("社團","")}</td>
@@ -1241,11 +1256,30 @@ function afterMy(){
               <td>${escapeHtml(r.studentName)} (${r.classNo}/${r.seatNo})</td>
               <td class="num">${fmt$(r.totalFee)}</td>
               <td><span class="badge ${r.status==='paid'?'paid':'pending'}">${r.status==='paid'?'已繳費':'待繳費'}</span></td>
+              <td>${canDelete
+                ? `<button class="btn btn-sm" data-mydel="${r.id}" style="color:var(--danger)">刪除</button>`
+                : `<span class="muted" style="font-size:12px">已繳費，請聯絡訓育組</span>`}</td>
             </tr>`;
           }).join("")}</tbody>
         </table>
       </div>`;
+    $$("[data-mydel]").forEach(b=>b.onclick=async e=>{
+      const id = e.currentTarget.dataset.mydel;
+      if (!confirm("確定刪除此筆報名？此動作無法復原。")) return;
+      const btn = e.currentTarget;
+      btn.disabled = true; btn.textContent = "刪除中…";
+      const result = await deleteRemoteReg(id);
+      if (!result.ok){
+        btn.disabled = false; btn.textContent = "刪除";
+        alert("刪除失敗，請稍後再試。\n" + (result.error||""));
+        return;
+      }
+      state.registrations = state.registrations.filter(x=>x.id!==id);
+      saveRegs();
+      runSearch();
+    });
   };
+  $("#my-search").onclick = runSearch;
 }
 
 /* steps */
@@ -1381,7 +1415,7 @@ function renderRegs(body){
         <table class="tbl" id="rg-tbl">
           <thead><tr>
             <th>報名編號</th><th>類別</th><th>班級</th><th>座號</th><th>姓名</th><th>社團</th><th>時間</th>
-            <th class="num">費用</th><th>聯絡人</th><th>電話</th><th>狀態</th><th>動作</th>
+            <th class="num">費用</th><th>聯絡人</th><th>電話</th><th>Email</th><th>狀態</th><th>動作</th>
           </tr></thead>
           <tbody></tbody>
         </table>
@@ -1393,7 +1427,7 @@ function renderRegs(body){
     const rows = state.registrations.filter(r =>
       (!cat || r.category===cat) &&
       (!q || (r.studentName+r.classNo+r.clubName+r.contactName).toLowerCase().includes(q))
-    ).sort((a,b)=> a.classNo.localeCompare(b.classNo) || a.seatNo.localeCompare(b.seatNo));
+    ).sort((a,b)=> String(a.classNo).localeCompare(String(b.classNo)) || String(a.seatNo).localeCompare(String(b.seatNo)));
     $("#rg-tbl tbody").innerHTML = rows.map(r=>{
       const c = findClub(r.clubId);
       return `<tr>
@@ -1407,6 +1441,7 @@ function renderRegs(body){
         <td class="num">${fmt$(r.totalFee)}</td>
         <td>${escapeHtml(r.contactName)}</td>
         <td>${escapeHtml(r.contactPhone)}</td>
+        <td>${escapeHtml(r.email||"")}</td>
         <td><span class="badge ${r.status==='paid'?'paid':'pending'}">${r.status==='paid'?'已繳費':'待繳費'}</span></td>
         <td>
           <button class="btn btn-sm" data-toggle="${r.id}">${r.status==='paid'?'設待繳':'設已繳'}</button>
@@ -1429,11 +1464,11 @@ function renderRegs(body){
   $("#rg-cat").onchange = refresh;
   $("#rg-q").oninput = refresh;
   $("#rg-csv").onclick = ()=>{
-    const head = ["報名編號","類別","班級","座號","姓名","社團","時間","費用","聯絡人","電話","狀態","報名時間"];
+    const head = ["報名編號","類別","班級","座號","姓名","社團","時間","費用","聯絡人","電話","Email","狀態","報名時間"];
     const lines = [head.join(",")];
     state.registrations.forEach(r=>{
       const c = findClub(r.clubId);
-      lines.push([r.id, CATEGORIES[r.category].title, r.classNo, r.seatNo, r.studentName, r.clubName, c?(c.day||"")+" "+c.time:"", r.totalFee, r.contactName, r.contactPhone, r.status, r.timestamp].map(s=>`"${String(s||"").replace(/"/g,'""')}"`).join(","));
+      lines.push([r.id, CATEGORIES[r.category].title, r.classNo, r.seatNo, r.studentName, r.clubName, c?(c.day||"")+" "+c.time:"", r.totalFee, r.contactName, r.contactPhone, r.email||"", r.status, r.timestamp].map(s=>`"${String(s||"").replace(/"/g,'""')}"`).join(","));
     });
     downloadFile("報名名單.csv", "\ufeff"+lines.join("\n"), "text/csv");
   };
@@ -1458,7 +1493,7 @@ function renderRoster(body){
   function buildSheet(clubId){
     const c = findClub(clubId);
     const rows = state.registrations.filter(r=>r.clubId===clubId)
-      .sort((a,b)=> a.classNo.localeCompare(b.classNo) || a.seatNo.localeCompare(b.seatNo));
+      .sort((a,b)=> String(a.classNo).localeCompare(String(b.classNo)) || String(a.seatNo).localeCompare(String(b.seatNo)));
     const sessions = (CLASS_START[c.day]||[]).slice(0, c.sessions);
     const sessHead = sessions.map((d,i)=>`<th><div style="font-size:10px; color:#666">第${i+1}次</div>${d}</th>`).join("");
     const sessCell = sessions.map(()=>`<td></td>`).join("");
@@ -1513,7 +1548,7 @@ function renderNotice(body){
       if (r.category!=="115") return false;
       const c = findClub(r.clubId); if (!c) return false;
       return day==="all" ? true : c.day===day;
-    }).sort((a,b)=> a.classNo.localeCompare(b.classNo) || a.seatNo.localeCompare(b.seatNo));
+    }).sort((a,b)=> String(a.classNo).localeCompare(String(b.classNo)) || String(a.seatNo).localeCompare(String(b.seatNo)));
     if (!regs.length) return `<div class="empty">該日無開課通知單</div>`;
     const slips = regs.map(r=>{
       const c = findClub(r.clubId);
@@ -1562,7 +1597,7 @@ function renderSummary(body){
   });
   const rows = Object.values(byStudent).sort((a,b)=>{
     const A = a[0], B = b[0];
-    return A.classNo.localeCompare(B.classNo) || A.seatNo.localeCompare(B.seatNo);
+    return String(A.classNo).localeCompare(String(B.classNo)) || String(A.seatNo).localeCompare(String(B.seatNo));
   });
   body.innerHTML = `
     <div class="table-wrap">
@@ -1632,10 +1667,10 @@ function renderPayment(body){
       <h4 style="margin:0 0 8px">預覽（115 學年度）</h4>
       <div id="pay-preview" style="max-height:50vh; overflow:auto; border:1px solid var(--line); border-radius:8px"></div>
     </div>`;
-  $("#pay-115").onclick = ()=>exportPayment("115");
-  $("#pay-summer").onclick = ()=>exportPayment("summer");
-  $("#pay-grade1").onclick = ()=>exportPayment("grade1");
-  $("#pay-all").onclick = ()=>exportPayment("all");
+  $("#pay-115").onclick = (e)=>exportPayment("115", e.currentTarget);
+  $("#pay-summer").onclick = (e)=>exportPayment("summer", e.currentTarget);
+  $("#pay-grade1").onclick = (e)=>exportPayment("grade1", e.currentTarget);
+  $("#pay-all").onclick = (e)=>exportPayment("all", e.currentTarget);
   // preview
   const grid = buildPaymentGrid("115");
   $("#pay-preview").innerHTML = `
@@ -1652,7 +1687,16 @@ function renderPayment(body){
 }
 
 function buildPaymentGrid(category){
-  let pool = state.registrations.slice();
+  const inferCat = (id)=>{
+    const s = String(id||"");
+    if (s.startsWith("SUM")) return "summer";
+    if (s.startsWith("G1"))  return "grade1";
+    return "115";
+  };
+  let pool = state.registrations.slice().map(r => ({
+    ...r,
+    category: (r.category && String(r.category).trim()) || inferCat(r.clubId),
+  }));
   let clubList;
   if (category==="all") clubList = allClubs();
   else { pool = pool.filter(r=>r.category===category); clubList = CATEGORIES[category].data; }
@@ -1661,7 +1705,7 @@ function buildPaymentGrid(category){
   const byStudent = {};
   pool.forEach(r=>{ const k=`${r.classNo}|${r.seatNo}|${r.studentName}`; (byStudent[k] ||= []).push(r); });
   const stus = Object.values(byStudent).sort((a,b)=>{
-    const A=a[0],B=b[0]; return A.classNo.localeCompare(B.classNo) || A.seatNo.localeCompare(B.seatNo);
+    const A=a[0],B=b[0]; return String(A.classNo).localeCompare(String(B.classNo)) || String(A.seatNo).localeCompare(String(B.seatNo));
   });
   const head = ["序號","班級","座號","姓名", ...presentClubs.map(c=>c.name), "合計"];
   const rows = stus.map((stu,i)=>{
@@ -1674,27 +1718,45 @@ function buildPaymentGrid(category){
   return { head, rows, clubs:presentClubs };
 }
 
-function exportPayment(category){
-  const { head, rows } = buildPaymentGrid(category);
+async function exportPayment(category, btn){
   const titleMap = { "115":"115學年度上學期 社團繳費清單", "summer":"114年度暑假社團 繳費清單", "grade1":"115學年度 小一社團 繳費清單", "all":"115學年度 社團繳費清單（總表）" };
-  const titleRow = ["臺北市雙蓮國小 "+titleMap[category]];
-  const data = [titleRow, [], head, ...rows];
-  const ws = XLSX.utils.aoa_to_sheet(data);
-  // merges
-  ws["!merges"] = [{s:{r:0,c:0}, e:{r:0,c:head.length-1}}];
-  // column widths
-  ws["!cols"] = head.map((h,i)=>({ wch: i<4 ? (i===0?6:i===3?12:8) : (i===head.length-1?12:14) }));
-  // styles via cell-ish — basic XLSX without styles plugin: at least number format
-  for (let r=3; r<data.length; r++){
-    for (let c=4; c<head.length; c++){
-      const v = data[r][c];
-      const ref = XLSX.utils.encode_cell({r, c});
-      if (typeof v === "number" && ws[ref]) ws[ref].z = "#,##0";
+  const clubList = category==="all" ? allClubs() : CATEGORIES[category].data;
+  const clubs = clubList.map(c=>({ id:c.id, name:c.name }));
+
+  if (!API_URL){ alert("尚未設定後端 API_URL，無法產生伺服器端報表。"); return; }
+
+  const origText = btn ? btn.textContent : null;
+  if (btn){ btn.disabled = true; btn.textContent = "產生中…"; }
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action:"exportPayment", category, title:titleMap[category], clubs }),
+    });
+    const text = await res.text();
+    let json;
+    try { json = JSON.parse(text); }
+    catch { throw new Error("後端回傳非 JSON：" + text.slice(0,200)); }
+    if (!json.ok) throw new Error(json.error || "Export failed");
+    if (!json.base64 || typeof json.base64 !== "string"){
+      console.error("export response:", json);
+      throw new Error("後端未回傳 base64 檔案內容（請看 console）");
     }
+    const bin = atob(json.base64);
+    const buf = new Uint8Array(bin.length);
+    for (let i=0; i<bin.length; i++) buf[i] = bin.charCodeAt(i);
+    const blob = new Blob([buf], { type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = json.filename || `雙蓮國小_${titleMap[category]}.xlsx`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  } catch(e){
+    alert("匯出失敗：" + e.message);
+  } finally {
+    if (btn){ btn.disabled = false; btn.textContent = origText; }
   }
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "繳費清單");
-  XLSX.writeFile(wb, `雙蓮國小_${titleMap[category]}.xlsx`);
 }
 
 function renderSettings(body){
