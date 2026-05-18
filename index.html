@@ -598,7 +598,7 @@ const TIMELINE = [
   { stage:"第一階段",  task:"報名開始",                    date:"5/25（一）8:00～5/27（三）23:59",      cls:"", highlight:true },
   { stage:"第一階段",  task:"錄取公告",                    date:"5/29（五）",      cls:"" },
   { stage:"第一階段",  task:"繳費時間",                  date:"6/4（四）~6/8（一）",       cls:"" },
-  { stage:"第一階段",  task:"\n",                    date:"\n",      cls:"" },
+ 
   { stage:"第二階段",  task:"第二階段名額公告",            date:"6/19（五）",      cls:"s2", highlight:true },
   { stage:"第二階段",  task:"報名開始",                    date:"6/20（六）8:00～6/22（一）23:59",      cls:"s2" },
   { stage:"第二階段",  task:"繳費時間",                    date:"6/26（五）～6/30（二）",      cls:"s2" },
@@ -854,7 +854,7 @@ function viewList(){
         ${days.map(d=>`<button class="chip ${state.filterDay===d?"active":""}" data-day="${d}">${d}</button>`).join("")}
       </div>
       <div class="chips" id="typeChips">
-        ${[["all","全部類別"],["sport","🏃 體育"],["art","🎨 藝文"]].map(([k,lbl])=>`<button class="chip ${state.filterType===k?"active":""}" data-type="${k}">${lbl}</button>`).join("")}
+        ${[["all","全部類別"]].map(([k,lbl])=>`<button class="chip ${state.filterType===k?"active":""}" data-type="${k}">${lbl}</button>`).join("")}
       </div>
     </div>
 
@@ -1001,7 +1001,7 @@ function viewForm(){
         <h4>注意事項確認</h4>
         <div class="checks">
           <label class="check"><input type="checkbox" id="f-agree1" ${fd.agree1?"checked":""}><span>我已閱讀並同意 <strong>社團招生簡章規定</strong>（含退費、請假等規定）</span></label>
-          <label class="check"><input type="checkbox" id="f-agree2" ${fd.agree2?"checked":""}><span>我了解 <strong>一旦繳費後不得轉換社團</strong></span></label>
+         
         </div>
       </div>
 
