@@ -1046,7 +1046,6 @@ function submitForm(){
     contactPhone: $("#f-phone").value.trim(),
     email: $("#f-email").value.trim(),
     agree1: $("#f-agree1").checked,
-    agree2: $("#f-agree2").checked,
   };
   let bad = false;
   $$(".field").forEach(el=>el.classList.remove("bad"));
@@ -1056,7 +1055,7 @@ function submitForm(){
   if (!f.contactName){ $("#f-contact").parentElement.classList.add("bad"); bad=true; }
   if (!/^09\d{8}$/.test(f.contactPhone)){ $("#f-phone").parentElement.classList.add("bad"); bad=true; }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)){ $("#f-email").parentElement.classList.add("bad"); bad=true; }
-  if (!f.agree1 || !f.agree2){ alert("請勾選兩項注意事項確認"); bad=true; }
+  if (!f.agree1){ alert("請勾選注意事項確認"); bad=true; }
   if (bad) { window.scrollTo({top:0, behavior:"smooth"}); return; }
   state.formData = f;
   go("confirm");
