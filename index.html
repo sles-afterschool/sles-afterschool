@@ -587,8 +587,8 @@ const clubs_grade1 = [
 
 /* category metadata */
 const CATEGORIES = {
-  "115":     { code:"A", title:"115上課外社團", sub:"正式開課:9/7（一）", emoji:"🎓", color:"blue",  data:clubs_115,    showDay:true,  classes:["101","102","103","104","105","201","202","203","204","205","301","302","303","304","305","306","401","402","403","404","405","406","501","502","503","504","505","506","507","601","602","603","604","605","606"] },
-  "summer":  { code:"S", title:"115暑假社團", sub:"7/6（日）～7/17（四）共10天", emoji:"☀️", color:"orange", data:clubs_summer, showDay:false, classes:["101","102","103","104","105","201","202","203","204","205","301","302","303","304","305","306","401","402","403","404","405","406","501","502","503","504","505","506","507","601","602","603","604","605","606"] },
+  "115":     { code:"A", title:"115上課外社團", sub:"正式開課:9/7（一）", emoji:"🎓", color:"blue",  data:clubs_115,    showDay:true,  pdf:"115-1社團簡章.pdf", classes:["101","102","103","104","105","201","202","203","204","205","301","302","303","304","305","306","401","402","403","404","405","406","501","502","503","504","505","506","507","601","602","603","604","605","606"] },
+  "summer":  { code:"S", title:"115暑假社團", sub:"7/6（日）～7/17（四）共10天", emoji:"☀️", color:"orange", data:clubs_summer, showDay:false, pdf:"115雙蓮國小暑假社團招生簡章.pdf", classes:["101","102","103","104","105","201","202","203","204","205","301","302","303","304","305","306","401","402","403","404","405","406","501","502","503","504","505","506","507","601","602","603","604","605","606"] },
   "grade1":  { code:"G", title:"小一社團",       sub:"正式開課：9/7（一）～1/20（三）", emoji:"⭐", color:"purple", data:clubs_grade1, showDay:true,  classes:"新生（尚未分班）" },
 };
 
@@ -854,6 +854,8 @@ function viewList(){
       <span class="muted">/</span>
       <span style="font-weight:600">${cat.title}</span>
     </div>
+
+    ${cat.pdf ? `<div style="margin-bottom:14px"><a class="btn btn-ghost" href="${encodeURI(cat.pdf)}" target="_blank" rel="noopener" download><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:6px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>下載招生簡章 PDF</a></div>` : ""}
 
     <div class="section-title"><h2>步驟 1 ・ 選擇社團</h2><span class="sub">${cat.data.length} 班可報名</span></div>
 
