@@ -188,7 +188,7 @@ a{color:inherit; text-decoration:none}
 .timeline{padding:24px 26px}
 .timeline h3{margin:0 0 4px; font-size:18px}
 .timeline .lede{color:var(--ink-mute); font-size:14px; margin-bottom:18px}
-.tl-grid{display:grid; grid-template-columns:140px 1fr 130px; gap:0}
+.tl-grid{display:grid; grid-template-columns:140px 1fr auto; gap:0}
 .tl-row{display:contents}
 .tl-row > *{padding:11px 12px; border-top:1px solid var(--line-soft)}
 .tl-row:first-child > *{border-top:0}
@@ -197,7 +197,7 @@ a{color:inherit; text-decoration:none}
 .tl-stage.prep{color:var(--ink-mute)}
 .tl-stage.open{color:var(--success); font-weight:700}
 .tl-task{font-size:14px}
-.tl-date{font-size:13px; color:var(--ink-soft); text-align:right; font-variant-numeric:tabular-nums}
+.tl-date{font-size:13px; color:var(--ink-soft); text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
 .tl-row.highlight .tl-task,.tl-row.highlight .tl-date{font-weight:700; color:var(--ink)}
 .tl-row.highlight .tl-stage{color:var(--accent)}
 
@@ -450,7 +450,7 @@ a{color:inherit; text-decoration:none}
   .admin-main{padding:16px}
   .kpi-row{grid-template-columns:repeat(2,1fr)}
   .chart-grid{grid-template-columns:1fr}
-  .tl-grid{grid-template-columns:90px 1fr 100px}
+  .tl-grid{grid-template-columns:90px 1fr auto}
   .tl-row > *{padding:8px 6px}
   .tl-stage,.tl-task,.tl-date{font-size:12.5px}
   .summary .grp{grid-template-columns:1fr}
@@ -623,7 +623,7 @@ const ADMIN_PASSWORD = "sles2026";
 /* Google Apps Script Web App URL. Leave empty to use localStorage only.
    Deploy the Apps Script (see README / chat) as a Web App with
    "Execute as: Me" and "Who has access: Anyone", then paste the /exec URL below. */
-const API_URL = "https://script.google.com/macros/s/AKfycbwVdp5T-eP-iH_P2IUJmcB2ABsg3-M7_9uqJZl5kVgDsPN5iz33sjQsG2RhjCHzuvtS/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzIM0IGrtfY1lADAvjvgib7565KGTNHcxLVGYB4pE4mYDsZe0UPHLr_YpYg8yD2RSAZ/exec";
 
 const state = {
   view:"home",
@@ -684,6 +684,34 @@ async function deleteRemoteReg(id){
     return await res.json();
   } catch(e){
     console.error("remote delete failed", e);
+    return { ok:false, error:String(e) };
+  }
+}
+async function bulkSaveRemote(regs){
+  if (!API_URL) return { ok:true, skipped:true };
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action:"bulkSave", regs }),
+    });
+    return await res.json();
+  } catch(e){
+    console.error("remote bulkSave failed", e);
+    return { ok:false, error:String(e) };
+  }
+}
+async function updateRemoteStatus(id, status){
+  if (!API_URL) return { ok:true, skipped:true };
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action:"updateStatus", id, status }),
+    });
+    return await res.json();
+  } catch(e){
+    console.error("remote updateStatus failed", e);
     return { ok:false, error:String(e) };
   }
 }
@@ -1435,14 +1463,32 @@ function renderRegs(body){
         </td>
       </tr>`;
     }).join("");
-    $$("[data-toggle]").forEach(b=>b.onclick=e=>{
-      const id=e.currentTarget.dataset.toggle;
-      const r=state.registrations.find(x=>x.id===id); r.status = r.status==="paid"?"pending":"paid";
+    $$("[data-toggle]").forEach(b=>b.onclick=async e=>{
+      const btn=e.currentTarget;
+      const id=btn.dataset.toggle;
+      const r=state.registrations.find(x=>x.id===id);
+      const newStatus = r.status==="paid"?"pending":"paid";
+      btn.disabled=true; btn.textContent="更新中…";
+      const result = await updateRemoteStatus(id, newStatus);
+      btn.disabled=false;
+      if(!result.ok && !result.skipped){
+        alert("狀態同步失敗，請稍後再試。\n"+(result.error||""));
+        return;
+      }
+      r.status=newStatus;
       saveRegs(); refresh();
     });
-    $$("[data-del]").forEach(b=>b.onclick=e=>{
-      const id=e.currentTarget.dataset.del;
+    $$("[data-del]").forEach(b=>b.onclick=async e=>{
+      const btn=e.currentTarget;
+      const id=btn.dataset.del;
       if (!confirm("確定刪除此報名紀錄？")) return;
+      btn.disabled=true; btn.textContent="刪除中…";
+      const result = await deleteRemoteReg(id);
+      btn.disabled=false;
+      if(!result.ok && !result.skipped){
+        alert("刪除失敗，請稍後再試。\n"+(result.error||""));
+        return;
+      }
       state.registrations = state.registrations.filter(x=>x.id!==id);
       saveRegs(); refresh();
     });
@@ -1706,38 +1752,53 @@ function buildPaymentGrid(category){
 
 async function exportPayment(category, btn){
   const titleMap = { "115":"115學年度上學期 社團繳費清單", "summer":"114年度暑假社團 繳費清單", "grade1":"115學年度 小一社團 繳費清單", "all":"115學年度 社團繳費清單（總表）" };
-  const clubList = category==="all" ? allClubs() : CATEGORIES[category].data;
-  const clubs = clubList.map(c=>({ id:c.id, name:c.name }));
+  const catLabel = { "115":"115上學期", "summer":"暑假社團", "grade1":"小一社團" };
+  const title = titleMap[category];
 
   if (!API_URL){ alert("尚未設定後端 API_URL，無法產生伺服器端報表。"); return; }
 
   const origText = btn ? btn.textContent : null;
   if (btn){ btn.disabled = true; btn.textContent = "產生中…"; }
   try {
+    // 向 GAS 取得最新完整報名資料（JSON）
     const res = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ action:"exportPayment", category, title:titleMap[category], clubs }),
+      body: JSON.stringify({ action:"exportPayment", category, title }),
     });
     const text = await res.text();
     let json;
     try { json = JSON.parse(text); }
     catch { throw new Error("後端回傳非 JSON：" + text.slice(0,200)); }
     if (!json.ok) throw new Error(json.error || "Export failed");
-    if (!json.base64 || typeof json.base64 !== "string"){
-      console.error("export response:", json);
-      throw new Error("後端未回傳 base64 檔案內容（請看 console）");
-    }
-    const bin = atob(json.base64);
-    const buf = new Uint8Array(bin.length);
-    for (let i=0; i<bin.length; i++) buf[i] = bin.charCodeAt(i);
-    const blob = new Blob([buf], { type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = json.filename || `雙蓮國小_${titleMap[category]}.xlsx`;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url), 1000);
+
+    // 用瀏覽器端 xlsx.js 產生 Excel
+    const regs = json.regs || [];
+    const headers = ["報名編號","類別","社團名稱","班級","座號","學生姓名","聯絡人","聯絡電話","Email","總費用（元）","報名時間","繳費狀態"];
+    const wsData = [
+      [title],
+      headers,
+      ...regs.map(r=>[
+        r.id,
+        catLabel[r.category] || r.category,
+        r.clubName,
+        r.classNo,
+        r.seatNo,
+        r.studentName,
+        r.contactName,
+        r.contactPhone,
+        r.email || "",
+        r.totalFee,
+        r.timestamp,
+        r.status==="paid" ? "已繳費" : "待繳費",
+      ])
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    // 合併第一列標題
+    ws["!merges"] = [{ s:{r:0,c:0}, e:{r:0,c:headers.length-1} }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, title.slice(0,30));
+    XLSX.writeFile(wb, json.filename || `雙蓮國小_${title}.xlsx`);
   } catch(e){
     alert("匯出失敗：" + e.message);
   } finally {
@@ -1767,23 +1828,67 @@ function renderSettings(body){
   $("#se-export").onclick = ()=>downloadFile(`雙蓮國小_報名資料_${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(state.registrations,null,2), "application/json");
   $("#se-import").onclick = ()=>{
     const inp = document.createElement("input"); inp.type="file"; inp.accept="application/json";
-    inp.onchange = e=>{
+    inp.onchange = async e=>{
       const f = e.target.files[0]; if (!f) return;
-      const r = new FileReader();
-      r.onload = ()=>{
+      const reader = new FileReader();
+      reader.onload = async ()=>{
         try {
-          const arr = JSON.parse(r.result);
+          const arr = JSON.parse(reader.result);
           if (!Array.isArray(arr)) throw new Error("格式錯誤");
-          if (!confirm(`即將匯入 ${arr.length} 筆資料，將覆蓋現有資料，確定？`)) return;
-          state.registrations = arr; saveRegs(); alert("匯入成功！"); renderAdmin();
+          if (!confirm(`即將匯入 ${arr.length} 筆資料，將覆蓋現有資料（包含伺服器），確定？`)) return;
+          const btn = $("#se-import");
+          btn.disabled = true; btn.textContent = "匯入中…";
+          if (API_URL) {
+            const result = await bulkSaveRemote(arr);
+            if (!result.ok && !result.skipped) {
+              alert("伺服器匯入失敗：" + (result.error||""));
+              btn.disabled = false; btn.textContent = "匯入備份 JSON"; return;
+            }
+          }
+          state.registrations = arr; saveRegs();
+          btn.disabled = false; btn.textContent = "匯入備份 JSON";
+          alert("匯入成功！"); renderAdmin();
         } catch(err){ alert("匯入失敗："+err.message); }
       };
-      r.readAsText(f);
+      reader.readAsText(f);
     };
     inp.click();
   };
-  $("#se-seed").onclick = ()=>{ if(confirm("將清空現有資料並載入示範資料，確定？")){ state.registrations=[]; seedDemo(); renderAdmin(); }};
-  $("#se-clear").onclick = ()=>{ if(confirm("確定清空所有報名資料？此動作無法復原。")){ state.registrations=[]; saveRegs(); renderAdmin(); }};
+  $("#se-seed").onclick = async ()=>{
+    if (!confirm("將清空現有資料並載入示範資料（包含伺服器），確定？")) return;
+    const btn = $("#se-seed");
+    btn.disabled = true; btn.textContent = "載入中…";
+    state.registrations = []; seedDemo(); // 先在本機產生示範資料
+    if (API_URL) {
+      const result = await bulkSaveRemote(state.registrations);
+      if (!result.ok && !result.skipped) {
+        alert("伺服器同步失敗：" + (result.error||"") + "\n（示範資料已存入本機）");
+      }
+    }
+    btn.disabled = false; btn.textContent = "重新載入示範資料";
+    renderAdmin();
+  };
+  $("#se-clear").onclick = async ()=>{
+    if (!confirm("確定清空所有報名資料？此動作無法復原。")) return;
+    const btn = $("#se-clear");
+    btn.disabled = true; btn.textContent = "清空中…";
+    // 同步刪除 Google 試算表資料
+    if (API_URL) {
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action:"clearAll" }),
+        });
+        const result = await res.json();
+        if (!result.ok) { alert("遠端清空失敗：" + (result.error||"")); btn.disabled=false; btn.textContent="⚠ 清空所有報名"; return; }
+      } catch(e) { alert("遠端清空失敗：" + e.message); btn.disabled=false; btn.textContent="⚠ 清空所有報名"; return; }
+    }
+    state.registrations = []; saveRegs();
+    btn.disabled = false; btn.textContent = "⚠ 清空所有報名";
+    alert("已清空所有報名資料！");
+    renderAdmin();
+  };
 }
 
 /* ═══════════════════════════════════════════════════
