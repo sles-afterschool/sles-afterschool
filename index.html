@@ -691,23 +691,7 @@ async function deleteRemoteReg(id){
 /* Seed demo data on first load so admin views aren't empty (invoked at bottom after helpers are defined) */
 function seedDemo(){
   const seed = [
-    { clubId:"115-11", classNo:"101", seatNo:"05", studentName:"王小明", contactName:"王大明", contactPhone:"0912345678" },
-    { clubId:"115-02", classNo:"101", seatNo:"05", studentName:"王小明", contactName:"王大明", contactPhone:"0912345678" },
-    { clubId:"115-04", classNo:"203", seatNo:"12", studentName:"李大華", contactName:"李正一", contactPhone:"0922334455" },
-    { clubId:"115-08", classNo:"203", seatNo:"12", studentName:"李大華", contactName:"李正一", contactPhone:"0922334455" },
-    { clubId:"115-11", classNo:"203", seatNo:"08", studentName:"陳小美", contactName:"陳爸爸", contactPhone:"0933445566" },
-    { clubId:"115-25", classNo:"304", seatNo:"15", studentName:"張育成", contactName:"張媽媽", contactPhone:"0911223344" },
-    { clubId:"115-07", classNo:"405", seatNo:"22", studentName:"黃志偉", contactName:"黃父", contactPhone:"0955667788" },
-    { clubId:"115-11", classNo:"405", seatNo:"22", studentName:"黃志偉", contactName:"黃父", contactPhone:"0955667788" },
-    { clubId:"115-21", classNo:"301", seatNo:"03", studentName:"林雅婷", contactName:"林媽媽", contactPhone:"0966778899" },
-    { clubId:"115-15", classNo:"502", seatNo:"18", studentName:"周冠宇", contactName:"周父", contactPhone:"0988997755" },
-    { clubId:"115-15", classNo:"601", seatNo:"02", studentName:"吳承恩", contactName:"吳媽媽", contactPhone:"0977665544" },
-    { clubId:"115-30", classNo:"604", seatNo:"31", studentName:"高梓涵", contactName:"高爸爸", contactPhone:"0987654321" },
-    { clubId:"115-30", classNo:"503", seatNo:"09", studentName:"蘇昱辰", contactName:"蘇媽媽", contactPhone:"0912098767" },
-    { clubId:"SUM-01", classNo:"201", seatNo:"14", studentName:"鄭凱文", contactName:"鄭父", contactPhone:"0930111222" },
-    { clubId:"SUM-08", classNo:"201", seatNo:"14", studentName:"鄭凱文", contactName:"鄭父", contactPhone:"0930111222" },
-    { clubId:"G1-01",  classNo:"新生（尚未分班）", seatNo:"—", studentName:"何沛恩", contactName:"何媽媽", contactPhone:"0988123456" },
-    { clubId:"G1-03",  classNo:"新生（尚未分班）", seatNo:"—", studentName:"莊宇博", contactName:"莊父", contactPhone:"0911334455" },
+    
   ];
   const dayMs = 24*3600*1000;
   state.registrations = seed.map((s,i)=>{
