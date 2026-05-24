@@ -404,17 +404,25 @@ a{color:inherit; text-decoration:none}
   .print-only{display:block}
   .print-sheet{display:block; page-break-after:always}
   .print-sheet:last-child{page-break-after:auto}
-  @page{size:A4; margin:14mm}
-  @page :first{margin-top:14mm}
+  @page{size:A4 portrait; margin:15mm}
+  @page roster{size:A4 landscape; margin:14mm}
+  @page notice{size:A4 portrait; margin:15mm}
 
-  .roster-sheet table{width:100%; border-collapse:collapse; font-size:11px}
-  .roster-sheet th,.roster-sheet td{border:1px solid #333; padding:5px 4px; text-align:center}
-  .roster-sheet th{background:#e8f0fb}
-  .roster-sheet h1{font-size:16px; margin:0 0 6px; text-align:center}
-  .roster-sheet .info{font-size:12px; margin-bottom:8px; display:grid; grid-template-columns:1fr 1fr; gap:4px 16px}
-  .roster-sheet .foot{font-size:11px; margin-top:10px; display:flex; justify-content:space-between}
+  .roster-sheet{page:roster}
+  .roster-sheet table{width:100%; border-collapse:collapse; font-size:10.5px}
+  .roster-sheet th,.roster-sheet td{border:1px solid #666; padding:5px 4px; text-align:center}
+  .roster-sheet th{background:#1a5fa8; color:#fff; font-weight:600; font-size:10px; padding:6px 4px}
+  .roster-sheet td{background:#fff}
+  .roster-sheet tbody tr:nth-child(even) td{background:#f8f9fa}
+  .roster-sheet tbody td:first-child{background:#1a5fa8; font-weight:600; color:#fff}
+  .roster-sheet h1{font-size:16px; margin:0 0 8px; text-align:center; font-weight:700; color:#1a5fa8}
+  .roster-sheet .info{font-size:11.5px; margin-bottom:8px; display:grid; grid-template-columns:repeat(3,1fr); gap:4px 16px; padding:8px 12px; background:#f0f4f8; border-radius:4px; border-left:4px solid #1a5fa8}
+  .roster-sheet .info b{color:#1a5fa8}
+  .roster-sheet .foot{font-size:11px; margin-top:10px; display:flex; justify-content:space-between; padding-top:8px; border-top:2px solid #1a5fa8}
+  .roster-sheet thead{display:table-header-group}
+  .roster-sheet .roster-header{page-break-inside:avoid}
 
-  .notice-page{display:grid; grid-template-rows:1fr 1fr; gap:12mm; height:auto; min-height:267mm}
+  .notice-sheet{page:notice}
   .notice-slip{
     border:2px solid var(--primary); border-radius:6px; padding:12mm 14mm;
     page-break-inside:avoid; font-size:12.5px;
@@ -588,9 +596,9 @@ const clubs_grade1 = [
 
 /* category metadata */
 const CATEGORIES = {
-  "115":     { code:"A", title:"115上課外社團", sub:"正式開課:9/7（一）", emoji:"🎓", color:"blue",  data:clubs_115,    showDay:true,  pdf:"115-1社團簡章.pdf", classes:["101","102","103","104","105","201","202","203","204","205","301","302","303","304","305","306","401","402","403","404","405","406","501","502","503","504","505","506","507","601","602","603","604","605","606"] },
+  "115":     { code:"A", title:"115上課外社團", sub:"正式開課:9/7（一）", emoji:"🎓", color:"blue",  data:clubs_115,    showDay:true,  pdf:"115-1社團簡章.pdf", classes:["101","102","103","104","105","201","202","203","204","205","301","302","303","304","305","306","401","402","403","404","405","406","501","502","503","504","505","506","507",] },
   "summer":  { code:"S", title:"115暑假社團", sub:"7/6（日）～7/17（四）共10天", emoji:"☀️", color:"orange", data:clubs_summer, showDay:false, pdf:"115雙蓮國小暑假社團招生簡章.pdf", classes:["101","102","103","104","105","201","202","203","204","205","301","302","303","304","305","306","401","402","403","404","405","406","501","502","503","504","505","506","507","601","602","603","604","605","606"] },
-  "grade1":  { code:"G", title:"小一社團",       sub:"正式開課：9/7（一）～1/20（三）", emoji:"⭐", color:"purple", data:clubs_grade1, showDay:true,  classes:"新生（尚未分班）" },
+  "grade1":  { code:"G", title:"小一社團",       sub:"正式開課：9/7（一）～1/20（三）", emoji:"⭐", color:"purple", data:clubs_grade1, showDay:true,  classes:"新生（尚未分班）", disabled:true, disabledMsg:"尚未開放報名" },
 };
 
 const TIMELINE = [
@@ -687,28 +695,10 @@ async function deleteRemoteReg(id){
     return { ok:false, error:String(e) };
   }
 }
-
-/* Seed demo data on first load so admin views aren't empty (invoked at bottom after helpers are defined) */
+/* Seed demo data - DISABLED (no auto-generated test data) */
 function seedDemo(){
-  const seed = [
-    
-  ];
-  const dayMs = 24*3600*1000;
-  state.registrations = seed.map((s,i)=>{
-    const club = findClub(s.clubId);
-    const cat = club.id.startsWith("SUM")?"summer": club.id.startsWith("G1")?"grade1":"115";
-    const code = CATEGORIES[cat].code;
-    return {
-      id:`115${code}-${String(i+1).padStart(4,"0")}`,
-      category:cat, clubId:s.clubId, clubName:club.name,
-      classNo:s.classNo, seatNo:s.seatNo, studentName:s.studentName,
-      contactName:s.contactName, contactPhone:s.contactPhone,
-      totalFee:club.total, agreedTerms:true,
-      timestamp:new Date(Date.now()-((seed.length-i)*dayMs/3)).toISOString(),
-      status: i%4===0 ? "paid" : "pending",
-    };
-  });
-  saveRegs();
+  // 不自動生成測試資料，保持空白
+  // state.registrations 會從 localStorage 載入真實報名資料
 }
 
 /* ═══════════════════════════════════════════════════
@@ -779,14 +769,14 @@ function viewHome(){
     <div class="section-title"><h2>選擇報名類別</h2><span class="sub">請點擊您要報名的項目</span></div>
     <div class="entries">
       ${Object.entries(CATEGORIES).map(([k,c])=>{
-        const disabled = k==="grade1";
+        const disabled = c.disabled || false;
         return `
-        <article class="entry ${c.color}${disabled?' disabled':''}" ${disabled?'':`data-cat="${k}"`} ${disabled?'aria-disabled="true"':''} style="${disabled?'opacity:.5; cursor:not-allowed; pointer-events:none;':''}">
+        <article class="entry ${c.color}" data-cat="${k}">
           <div class="badge">${c.emoji}</div>
           <h3>${c.title}</h3>
           <div class="sub">${c.sub}</div>
           <div class="stat">
-            <div>${disabled?"尚未開放報名": k==="115"?"第一階段、第二階段報名": k==="summer"?"第一階段報名":"正式開課：9/7（一）～1/20（三）"}</div>
+            <div>${k==="115"?"第一階段、第二階段報名": k==="summer"?"第一階段報名":"正式開課：9/7（一）～1/20（三）"}</div>
           </div>
           <div class="arrow">→</div>
         </article>`;}).join("")}
@@ -903,7 +893,7 @@ function renderClubGrid(){
           <div class="bar"><i style="width:${pct}%"></i></div>
           <span>${taken}/${c.spots}</span>
         </div>
-        <button class="btn btn-primary btn-sm" data-pick="${c.id}">我要報名 →</button>
+        <button class="btn btn-sm btn-primary" data-pick="${c.id}">我要報名</button>
       </div>
     </article>`;
   }).join("")}</div>`;
@@ -1126,9 +1116,11 @@ function afterConfirm(){
     });
     if (dupTime){
       if (dupTime.clubId===club.id){
-        if (!confirm("此學生已報名同一社團，確定再次送出？")) return;
+        alert("此學生已報名同一社團，無法重複報名！");
+        return;
       } else {
-        if (!confirm("此學生已報名同一時段的另一社團，確定仍要送出？")) return;
+        alert(`此學生已報名同一時段的另一社團（${findClub(dupTime.clubId)?.name}），請先至「我的報名」刪除該報名，才能報名此社團。`);
+        return;
       }
     }
     const reg = {
@@ -1286,7 +1278,7 @@ const ADMIN_TABS = [
   { k:"roster",    label:"📄 各班點名表（列印）" },
   { k:"notice",    label:"📬 開課通知單" },
   { k:"summary",   label:"👥 全校學生社團一覽" },
-  { k:"payment",   label:"💰 繳費清單 Excel" },
+  { k:"payment",   label:"💰 繳費單下載" },
   { k:"settings",  label:"⚙️ 設定 / 重設資料" },
 ];
 
@@ -1391,7 +1383,7 @@ function renderRegs(body){
         <div style="display:flex; gap:8px">
           <select id="rg-cat" class="btn btn-sm" style="padding:6px 10px">
             <option value="">全部類別</option>
-            ${Object.entries(CATEGORIES).map(([k,c])=>`<option value="${k}">${c.title}</option>`).join("")}
+            ${Object.entries(CATEGORIES).filter(([k,c])=>!c.disabled).map(([k,c])=>`<option value="${k}">${c.title}</option>`).join("")}
           </select>
           <input id="rg-q" placeholder="搜尋姓名/班級/社團" class="btn btn-sm" style="padding:6px 10px; min-width:200px; text-align:left">
           <button class="btn btn-sm" id="rg-csv">匯出 CSV</button>
@@ -1463,209 +1455,350 @@ function renderRegs(body){
 
 function renderRoster(body){
   body.innerHTML = `
-    <div class="table-wrap">
-      <div class="table-head">
-        <div style="font-weight:600">點名表列印</div>
-        <div style="display:flex; gap:8px; align-items:center">
-          <select id="rs-club" class="btn btn-sm" style="padding:6px 10px; min-width:280px">
-            ${clubs_115.map(c=>`<option value="${c.id}">${c.day} ${c.time} ・ ${c.name}（${spotsTaken(c.id)}人）</option>`).join("")}
-          </select>
-          <button class="btn btn-sm" id="rs-preview">預覽</button>
-          <button class="btn btn-primary btn-sm" id="rs-print">🖨 列印 / 存 PDF</button>
-        </div>
+    <div class="card" style="padding:24px 28px">
+      <h3 style="margin-top:0">各社團點名表列印</h3>
+      <p class="muted">A4 橫式，一個社團一張，列出該社團所有報名學生。</p>
+      <div style="display:flex; gap:10px; margin-top:18px; align-items:center">
+        <select id="rs-club" class="btn btn-sm" style="padding:6px 10px; min-width:280px">
+          <option value="all">全部社團一次列印</option>
+          ${clubs_115.map(c=>`<option value="${c.id}">${c.day} ${c.time} ・ ${c.name}（${spotsTaken(c.id)}人）</option>`).join("")}
+        </select>
+        <button class="btn btn-sm" id="rs-preview">預覽</button>
+        <button class="btn btn-primary btn-sm" id="rs-print">🖨 列印 / 存 PDF</button>
       </div>
-      <div id="rs-preview-area" style="padding:24px; background:#f1f3f5"></div>
+      
+      <div class="divider"></div>
+      <h4 style="margin:0 0 8px">預覽</h4>
+      <div id="rs-preview-area" style="max-height:60vh; overflow:auto; border:1px solid var(--line); border-radius:8px; background:#f5f5f5; padding:20px"></div>
     </div>`;
+  
   function buildSheet(clubId){
-    const c = findClub(clubId);
-    const rows = state.registrations.filter(r=>r.clubId===clubId)
-      .sort((a,b)=> String(a.classNo).localeCompare(String(b.classNo)) || String(a.seatNo).localeCompare(String(b.seatNo)));
-    const sessions = (CLASS_START[c.day]||[]).slice(0, c.sessions);
-    const sessHead = sessions.map((d,i)=>`<th><div style="font-size:10px; color:#666">第${i+1}次</div>${d}</th>`).join("");
-    const sessCell = sessions.map(()=>`<td></td>`).join("");
-    return `
-      <div class="roster-sheet print-sheet" style="background:#fff; padding:18mm 14mm; max-width:1100px; margin:0 auto; box-shadow:0 4px 14px rgba(0,0,0,.08)">
-        <h1>臺北市雙蓮國小　115學年度上學期　社團點名表</h1>
-        <div class="info">
-          <div><b>社團名稱：</b>${escapeHtml(c.name)}</div>
-          <div><b>授課教師：</b>${escapeHtml(c.teacher)}</div>
-          <div><b>上課時間：</b>${c.day} ${c.time}</div>
-          <div><b>上課地點：</b>${escapeHtml(c.location)}</div>
-          <div><b>開始日期：</b>${sessions[0]||"待定"}</div>
-          <div><b>上課次數：</b>共 ${c.sessions} 次</div>
-        </div>
-        <table>
-          <thead><tr><th style="width:4%">序</th><th style="width:7%">班級</th><th style="width:7%">座號</th><th style="width:11%">姓名</th>${sessHead}<th style="width:10%">備註</th></tr></thead>
-          <tbody>
-            ${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(r.classNo)}</td><td>${escapeHtml(r.seatNo)}</td><td style="text-align:left; padding-left:8px">${escapeHtml(r.studentName)}</td>${sessCell}<td></td></tr>`).join("")}
-            ${Array.from({length: Math.max(0, c.spots-rows.length)}).map((_,i)=>`<tr><td>${rows.length+i+1}</td><td></td><td></td><td></td>${sessCell}<td></td></tr>`).join("")}
-          </tbody>
-        </table>
-        <div class="foot"><div>共 ${rows.length} 人</div><div>列印日期：____ 年 __ 月 __ 日</div></div>
-      </div>`;
+    const clubIds = clubId === "all" ? clubs_115.map(c=>c.id) : [clubId];
+    
+    return clubIds.map(cid=>{
+      const c = findClub(cid);
+      if (!c) return "";
+      
+      const rows = state.registrations
+        .filter(r=>r.clubId===cid)
+        .sort((a,b)=> String(a.classNo).localeCompare(String(b.classNo)) || String(a.seatNo).localeCompare(String(b.seatNo)));
+      
+      const sessions = (CLASS_START[c.day]||[]).slice(0, c.sessions);
+      
+      // 根據上課次數調整欄位寬度
+      let fixedCols = {seq: 3, class: 5, seat: 4, name: 8, contact: 8, note: 6}; // 總34%
+      let dateWidth = (100 - 34) / c.sessions; // 剩餘66%平均分配給日期
+      
+      // 如果日期欄位太窄（<3%），壓縮固定欄位
+      if (dateWidth < 3) {
+        fixedCols = {seq: 2.5, class: 4, seat: 3.5, name: 7, contact: 7, note: 5}; // 總29%
+        dateWidth = (100 - 29) / c.sessions;
+      }
+      
+      const sessHead = sessions.map((d)=>`<th style="width:${dateWidth.toFixed(1)}%; font-size:${dateWidth < 3.5 ? '8px' : '9px'}">${d}</th>`).join("");
+      const sessCell = sessions.map(()=>`<td></td>`).join("");
+      
+      // 加入空白列到滿額
+      const allRows = [...rows, ...Array.from({length: Math.max(0, c.spots-rows.length)}).map((_,i)=>({empty:true, seq:rows.length+i+1}))];
+      
+      // 每頁最多 25 列（含標題）
+      const rowsPerPage = 25;
+      const pages = [];
+      for (let i = 0; i < allRows.length; i += rowsPerPage) {
+        pages.push(allRows.slice(i, i + rowsPerPage));
+      }
+      
+      // 生成每一頁
+      return pages.map((pageRows, pageIdx) => `
+        <div class="roster-sheet print-sheet" style="background:#fff; padding:14mm 12mm; margin-bottom:16px; box-shadow:0 4px 14px rgba(0,0,0,.08); page-break-after:always">
+          <h1>臺北市雙蓮國小　115學年度上學期　社團點名表</h1>
+          <div class="info">
+            <div><b>社團名稱：</b>${escapeHtml(c.name)}</div>
+            <div><b>授課教師：</b>${escapeHtml(c.teacher)}</div>
+            <div><b>上課時間：</b>${c.day} ${c.time}</div>
+            <div><b>上課地點：</b>${escapeHtml(c.location)}</div>
+            <div><b>開始日期：</b>${sessions[0]||"待定"}</div>
+            <div><b>上課次數：</b>共 ${c.sessions} 次</div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width:${fixedCols.seq}%">序</th>
+                <th style="width:${fixedCols.class}%">班級</th>
+                <th style="width:${fixedCols.seat}%">座號</th>
+                <th style="width:${fixedCols.name}%">姓名</th>
+                <th style="width:${fixedCols.contact}%">聯絡人</th>
+                ${sessHead}
+                <th style="width:${fixedCols.note}%">備註</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${pageRows.map(r => r.empty ? `<tr>
+                <td>${r.seq}</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                ${sessCell}
+                <td></td>
+              </tr>` : `<tr>
+                <td>${rows.indexOf(r)+1}</td>
+                <td>${escapeHtml(r.classNo)}</td>
+                <td>${escapeHtml(r.seatNo)}</td>
+                <td style="text-align:left; padding-left:8px">${escapeHtml(r.studentName)}</td>
+                <td style="text-align:left; padding-left:6px; font-size:9px">${escapeHtml(r.contactName||'')}<br>${escapeHtml(r.contactPhone||'')}</td>
+                ${sessCell}
+                <td></td>
+              </tr>`).join("")}
+            </tbody>
+          </table>
+          <div class="foot"><div>共 ${rows.length} 人${pages.length > 1 ? ` （第 ${pageIdx+1}/${pages.length} 頁）` : ''}</div><div>列印日期：____ 年 __ 月 __ 日</div></div>
+        </div>`).join("");
+    }).join("");
   }
+  
   $("#rs-preview").onclick = ()=>{ $("#rs-preview-area").innerHTML = buildSheet($("#rs-club").value); };
   $("#rs-print").onclick = ()=>{
     $("#printRegion").innerHTML = buildSheet($("#rs-club").value);
     setTimeout(()=>window.print(), 100);
   };
-  // initial preview
-  $("#rs-preview-area").innerHTML = buildSheet(clubs_115[0].id);
+  $("#rs-preview-area").innerHTML = buildSheet("all");
 }
 
 function renderNotice(body){
   body.innerHTML = `
-    <div class="table-wrap">
-      <div class="table-head">
-        <div style="font-weight:600">開課通知單列印</div>
-        <div style="display:flex; gap:8px; align-items:center">
-          <select id="nt-day" class="btn btn-sm" style="padding:6px 10px">
-            <option value="all">全部星期一次列印</option>
-            ${["週一","週二","週三","週四","週五"].map(d=>`<option value="${d}">${d}</option>`).join("")}
-          </select>
-          <button class="btn btn-sm" id="nt-preview">預覽</button>
-          <button class="btn btn-primary btn-sm" id="nt-print">🖨 列印 / 存 PDF</button>
-        </div>
+    <div class="card" style="padding:24px 28px">
+      <h3 style="margin-top:0">開課通知單列印</h3>
+      <p class="muted">一個學生一張 A4 直式通知單，多社團合併顯示。</p>
+      <div style="display:flex; gap:10px; margin-top:18px">
+        <select id="nt-cat" class="btn btn-sm" style="padding:6px 10px">
+          <option value="115">115上學期</option>
+          <option value="summer">115暑假</option>
+        </select>
+        <button class="btn btn-primary" id="nt-print">🖨 列印全部通知單</button>
       </div>
-      <div id="nt-preview-area" style="padding:24px; background:#f1f3f5"></div>
+      
+      <div class="divider"></div>
+      <h4 style="margin:0 0 8px">預覽</h4>
+      <div id="nt-preview-area" style="max-height:60vh; overflow:auto; border:1px solid var(--line); border-radius:8px; background:#f5f5f5; padding:20px"></div>
     </div>`;
-  function buildNotice(day){
-    const regs = state.registrations.filter(r=>{
-      if (r.category!=="115") return false;
-      const c = findClub(r.clubId); if (!c) return false;
-      return day==="all" ? true : c.day===day;
-    }).sort((a,b)=> String(a.classNo).localeCompare(String(b.classNo)) || String(a.seatNo).localeCompare(String(b.seatNo)));
-    if (!regs.length) return `<div class="empty">該日無開課通知單</div>`;
-    const slips = regs.map(r=>{
-      const c = findClub(r.clubId);
-      const startDate = (CLASS_START[c.day]||[])[0]||"待定";
-      const dayMap = {"週一":"一","週二":"二","週三":"三","週四":"四","週五":"五"};
+  function buildNotice(category){
+    // 按學生分組
+    const studentMap = new Map();
+    state.registrations.filter(r=>{
+      if (r.category !== category) return false;
+      const c = findClub(r.clubId); 
+      return c ? true : false;
+    }).forEach(r=>{
+      const key = `${r.classNo}-${r.seatNo}-${r.studentName}`;
+      if (!studentMap.has(key)) {
+        studentMap.set(key, {classNo: r.classNo, seatNo: r.seatNo, studentName: r.studentName, clubs: []});
+      }
+      studentMap.get(key).clubs.push(findClub(r.clubId));
+    });
+    
+    const students = Array.from(studentMap.values()).sort((a,b)=> 
+      String(a.classNo).localeCompare(String(b.classNo)) || String(a.seatNo).localeCompare(String(b.seatNo))
+    );
+    
+    if (!students.length) return `<div class="empty">目前無報名資料</div>`;
+    
+    const titleText = category === "115" ? "115上學期雙蓮國小課外社團活動開課通知單" : "115暑假雙蓮國小課外社團活動開課通知單";
+    
+    const slips = students.map(student=>{
+      // 統一使用緊湊格式
+      const fontSize = {title: 14, subtitle: 12, content: 10.5, note: 10, contact: 10};
+      const spacing = {topPad: '12mm', bottomPad: '12mm', tablePad: '4px 6px', noticeMargin: '8px 0', noticePad: '8px 10px'};
+      
+      const clubsHtml = student.clubs.map(c=>`
+        <tr><td style="padding:${spacing.tablePad}; background:#f0f4f8; font-weight:600; border:1px solid #ddd; font-size:${fontSize.content}px">社團</td><td style="padding:${spacing.tablePad}; border:1px solid #ddd; font-weight:700; color:#1a5fa8; font-size:${fontSize.subtitle}px">${escapeHtml(c.name)}</td></tr>
+        <tr><td style="padding:${spacing.tablePad}; background:#f0f4f8; font-weight:600; border:1px solid #ddd; font-size:${fontSize.content}px">地點</td><td style="padding:${spacing.tablePad}; border:1px solid #ddd; font-size:${fontSize.content}px">${escapeHtml(c.location)}</td></tr>
+        <tr><td style="padding:${spacing.tablePad}; background:#f0f4f8; font-weight:600; border:1px solid #ddd; font-size:${fontSize.content}px">時間</td><td style="padding:${spacing.tablePad}; border:1px solid #ddd; font-size:${fontSize.content}px">${c.day} ${c.time}</td></tr>
+        <tr><td colspan="2" style="height:3px; border:none"></td></tr>
+      `).join("");
+      
       return `
-        <div class="notice-slip" style="background:#fff; padding:18px 22px; border:2px solid var(--primary); border-radius:8px; margin-bottom:14px">
-          <h2>臺北市雙蓮國小　115學年度上學期</h2>
-          <h2 style="margin-top:0">社團課程開課通知單</h2>
-          <div class="sub">親愛的 <u>${escapeHtml(r.classNo)}</u> 班 <u>${escapeHtml(r.seatNo)}</u> 號 <u>${escapeHtml(r.studentName)}</u> 同學的家長，您好：</div>
-          <div style="margin:6px 0 10px; font-size:12.5px">您的孩子已完成報名以下社團，請於開課前確認相關事項：</div>
-          <div class="row">
-            <div class="l">▸ 社團名稱</div><div>${escapeHtml(c.name)}</div>
-            <div class="l">▸ 上課時間</div><div>週${dayMap[c.day]}　${c.time}</div>
-            <div class="l">▸ 開始日期</div><div>115年 ${startDate.replace("/"," 月 ")} 日</div>
-            <div class="l">▸ 上課地點</div><div>${escapeHtml(c.location)}</div>
-            <div class="l">▸ 授課教師</div><div>${escapeHtml(c.teacher)}</div>
-            <div class="l">▸ 上課次數</div><div>${c.sessions} 次</div>
-            <div class="l">▸ 費　　用</div><div>學費 ${fmt$(c.tuition)}　${c.material?`／材料費 ${fmt$(c.material)}（另收）`:""}　／合計 ${fmt$(c.total)}</div>
+        <div class="notice-sheet" style="background:#fff; border:2px solid #1a5fa8; border-radius:6px; padding:${spacing.topPad} 16mm ${spacing.bottomPad}; margin-bottom:16px; page-break-after:always; min-height:267mm; max-height:297mm; overflow:hidden">
+          <h2 style="text-align:center; margin:0 0 2px; font-size:${fontSize.title}px; color:#1a5fa8; line-height:1.2">${titleText}</h2>
+          <div style="border-top:2px solid #1a5fa8; margin:5px 0"></div>
+          
+          <table style="width:100%; margin:6px 0; border-collapse:collapse; font-size:${fontSize.content}px">
+            <tr><td style="padding:${spacing.tablePad}; background:#f0f4f8; font-weight:600; width:80px; border:1px solid #ddd">班級</td><td style="padding:${spacing.tablePad}; border:1px solid #ddd">${escapeHtml(student.classNo)}</td></tr>
+            <tr><td style="padding:${spacing.tablePad}; background:#f0f4f8; font-weight:600; border:1px solid #ddd">姓名</td><td style="padding:${spacing.tablePad}; border:1px solid #ddd">${escapeHtml(student.studentName)}</td></tr>
+            <tr><td colspan="2" style="height:4px; border:none"></td></tr>
+            ${clubsHtml}
+          </table>
+          
+          <div style="background:#fff8e1; border-left:4px solid #f9a825; padding:${spacing.noticePad}; margin:${spacing.noticeMargin}; border-radius:4px">
+            <div style="font-weight:700; margin-bottom:5px; color:#f57c00; font-size:${fontSize.subtitle}px">⚠️ 注意事項</div>
+            <ol style="margin:0; padding-left:14px; line-height:1.4; font-size:${fontSize.content}px">
+              <li>學生請假須由家長事先聯繫學務處，請假或缺課者，恕不退費。</li>
+              <li>為了學生的安全，社團課結束後請家長準時至大門口接學生，請勿讓學生自行提前返家。</li>
+              <li>本校社團課程無集體下課時段，教師將視課程及學生現況，安排休息、喝水上廁所活動。</li>
+              <li>上課後若嚴重擾亂上課秩序，經任課老師勸阻不聽者，經學務處查明後，將停止該生報名社團活動之權利一學期。</li>
+              <li>停課日期：費用已從學費中扣除，不再補課。（期中、期末評量期間不停課）</li>
+            </ol>
+            <div style="margin-top:4px; font-size:${fontSize.note}px; line-height:1.4">
+              <div style="margin-top:2px"><strong>※ 國定假日（費用已扣除，不補課）：</strong>9/25（五）中秋節補假、9/28（一）教師節補假、10/9（五）國慶日補假、10/26（一）光復節補假、12/25（五）行憲紀念日補假、1/1（五）元旦。</div>
+              <div style="margin-top:2px"><strong>※ 其他：</strong>凡遇颱風、地震、豪雨等不可抗拒之天災時或社會事件而停課之情事，不補課，課程費用納入社團基金作為改善社團設備使用。</div>
+              <div style="margin-top:2px"><strong>※ 社團老師因故請假無法上課，一律以退費處理，不另補課。</strong></div>
+            </div>
           </div>
-          <div class="warn">
-            ⚠️ 注意事項：<br>
-            □ 請準備上課所需材料（${escapeHtml(c.note||"詳見備註欄")}）<br>
-            □ 請假請事先聯絡學務處 02-2557-0309 轉 1022<br>
-            □ 請家長負責接送安全
+          
+          <div style="text-align:center; margin-top:6px; padding-top:6px; border-top:1px solid #ddd; font-size:${fontSize.contact}px; color:#666; line-height:1.4">
+            如有問題請洽雙蓮國小學務處訓育組 羅老師 Tel：02-25570309 轉 1022
           </div>
-          <div style="text-align:right; font-size:12px; margin-top:6px; color:#555">學務處　敬上　・　115年 9月</div>
         </div>`;
     }).join("");
-    return `<div class="print-sheet" style="max-width:920px; margin:0 auto">${slips}</div>`;
+    return slips;
   }
-  $("#nt-preview").onclick = ()=>{ $("#nt-preview-area").innerHTML = buildNotice($("#nt-day").value); };
+  $("#nt-cat").onchange = ()=>{ $("#nt-preview-area").innerHTML = buildNotice($("#nt-cat").value); };
   $("#nt-print").onclick = ()=>{
-    $("#printRegion").innerHTML = buildNotice($("#nt-day").value);
+    $("#printRegion").innerHTML = buildNotice($("#nt-cat").value);
     setTimeout(()=>window.print(), 100);
   };
-  $("#nt-preview-area").innerHTML = buildNotice("all");
+  $("#nt-preview-area").innerHTML = buildNotice("115");
 }
 
 function renderSummary(body){
-  // group registrations by student
-  const byStudent = {};
-  state.registrations.forEach(r=>{
-    const k = `${r.classNo}|${r.seatNo}|${r.studentName}`;
-    (byStudent[k] ||= []).push(r);
-  });
-  const rows = Object.values(byStudent).sort((a,b)=>{
-    const A = a[0], B = b[0];
-    return String(A.classNo).localeCompare(String(B.classNo)) || String(A.seatNo).localeCompare(String(B.seatNo));
-  });
   body.innerHTML = `
-    <div class="table-wrap">
-      <div class="table-head">
-        <div>
-          <div style="font-weight:600">全校學生社團一覽</div>
-          <div class="muted" style="font-size:12.5px">共 ${rows.length} 位學生報名</div>
-        </div>
-        <button class="btn btn-sm" id="sm-csv">匯出 CSV</button>
+    <div class="card" style="padding:24px 28px">
+      <h3 style="margin-top:0">全校學生社團一覽</h3>
+      <p class="muted">按類別匯出 Excel 檔案，每人報多個社團會分成多列呈現。</p>
+      <div style="display:flex; gap:10px; margin-top:18px; flex-wrap:wrap">
+        <button class="btn btn-primary" id="sm-115">📊 匯出：115上學期</button>
+        <button class="btn btn-accent" id="sm-summer">📊 匯出：115暑假</button>
+        <button class="btn" style="background:var(--purple); color:#fff; border-color:var(--purple)" id="sm-grade1">📊 匯出：小一新生</button>
       </div>
-      <div style="max-height:65vh; overflow:auto">
-        <table class="tbl">
-          <thead><tr>
-            <th>班級</th><th>座號</th><th>姓名</th>
-            <th>社團 1</th><th>時間 1</th><th class="num">費用 1</th>
-            <th>社團 2</th><th>時間 2</th><th class="num">費用 2</th>
-            <th>社團 3</th><th class="num">合計</th>
-          </tr></thead>
-          <tbody>
-            ${rows.map(stu=>{
-              const items = stu.slice(0,3).map(r=>{
-                const c = findClub(r.clubId);
-                return { name:r.clubName, time:c?(c.day||"")+" "+c.time:"", fee:r.totalFee };
-              });
-              while (items.length<3) items.push({name:"",time:"",fee:""});
-              const total = stu.reduce((s,r)=>s+r.totalFee,0);
-              return `<tr>
-                <td>${escapeHtml(stu[0].classNo)}</td>
-                <td>${escapeHtml(stu[0].seatNo)}</td>
-                <td>${escapeHtml(stu[0].studentName)}</td>
-                <td>${escapeHtml(items[0].name)}</td><td>${escapeHtml(items[0].time)}</td><td class="num">${items[0].fee?fmt$(items[0].fee):""}</td>
-                <td>${escapeHtml(items[1].name)}</td><td>${escapeHtml(items[1].time)}</td><td class="num">${items[1].fee?fmt$(items[1].fee):""}</td>
-                <td>${escapeHtml(items[2].name)}</td>
-                <td class="num"><strong>${fmt$(total)}</strong></td>
-              </tr>`;
-            }).join("")}
-          </tbody>
-        </table>
-      </div>
+      
+      <div class="divider"></div>
+      <h4 style="margin:0 0 8px">預覽（所有類別）</h4>
+      <div id="sm-preview" style="max-height:50vh; overflow:auto; border:1px solid var(--line); border-radius:8px"></div>
     </div>`;
-  $("#sm-csv").onclick = ()=>{
-    const head = ["班級","座號","姓名","社團1","時間1","費用1","社團2","時間2","費用2","社團3","時間3","費用3","合計"];
-    const lines=[head.join(",")];
-    rows.forEach(stu=>{
-      const its = stu.slice(0,3).map(r=>{ const c=findClub(r.clubId); return [r.clubName, c?(c.day||"")+" "+c.time:"", r.totalFee]; });
-      while (its.length<3) its.push(["","",""]);
-      const total = stu.reduce((s,r)=>s+r.totalFee,0);
-      lines.push([stu[0].classNo, stu[0].seatNo, stu[0].studentName, ...its.flat(), total].map(s=>`"${String(s||"").replace(/"/g,'""')}"`).join(","));
+  
+  function exportByCategory(category, title) {
+    const filtered = state.registrations.filter(r => {
+      const inferCat = (id) => {
+        const s = String(id || "");
+        if (s.startsWith("SUM")) return "summer";
+        if (s.startsWith("G1")) return "grade1";
+        return "115";
+      };
+      const cat = (r.category && String(r.category).trim()) || inferCat(r.clubId);
+      return cat === category;
     });
-    downloadFile("全校學生社團一覽.csv", "\ufeff"+lines.join("\n"), "text/csv");
-  };
+    
+    const rows = filtered.map(r => {
+      const c = findClub(r.clubId);
+      return {
+        classNo: r.classNo,
+        seatNo: r.seatNo,
+        studentName: r.studentName,
+        clubName: r.clubName,
+        time: c ? (c.day || "") + " " + c.time : "",
+        location: c ? c.location : ""
+      };
+    }).sort((a, b) => {
+      return String(a.classNo).localeCompare(String(b.classNo)) || 
+             String(a.seatNo).localeCompare(String(b.seatNo));
+    });
+    
+    const headers = ["班級", "座號", "姓名", "社團", "時間", "上課地點"];
+    const wsData = [
+      [title],
+      headers,
+      ...rows.map(r => [r.classNo, r.seatNo, r.studentName, r.clubName, r.time, r.location])
+    ];
+    
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws["!merges"] = [{ s: {r:0, c:0}, e: {r:0, c:headers.length-1} }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, title.slice(0, 30));
+    XLSX.writeFile(wb, `雙蓮國小_${title}_學生一覽.xlsx`);
+  }
+  
+  $("#sm-115").onclick = () => exportByCategory("115", "115上學期社團");
+  $("#sm-summer").onclick = () => exportByCategory("summer", "115暑假社團");
+  $("#sm-grade1").onclick = () => exportByCategory("grade1", "小一新生社團");
+  
+  // Preview all
+  const allRows = state.registrations.map(r => {
+    const c = findClub(r.clubId);
+    const inferCat = (id) => {
+      const s = String(id || "");
+      if (s.startsWith("SUM")) return "暑假";
+      if (s.startsWith("G1")) return "小一";
+      return "115上";
+    };
+    return {
+      category: inferCat(r.clubId),
+      classNo: r.classNo,
+      seatNo: r.seatNo,
+      studentName: r.studentName,
+      clubName: r.clubName,
+      time: c ? (c.day || "") + " " + c.time : "",
+      location: c ? c.location : ""
+    };
+  }).sort((a, b) => {
+    return a.category.localeCompare(b.category) ||
+           String(a.classNo).localeCompare(String(b.classNo)) || 
+           String(a.seatNo).localeCompare(String(b.seatNo));
+  });
+  
+  $("#sm-preview").innerHTML = `
+    <table class="tbl">
+      <thead><tr>
+        <th>類別</th><th>班級</th><th>座號</th><th>姓名</th><th>社團</th><th>時間</th><th>上課地點</th>
+      </tr></thead>
+      <tbody>
+        ${allRows.map(row => `<tr>
+          <td><span class="tag">${escapeHtml(row.category)}</span></td>
+          <td>${escapeHtml(row.classNo)}</td>
+          <td>${escapeHtml(row.seatNo)}</td>
+          <td>${escapeHtml(row.studentName)}</td>
+          <td>${escapeHtml(row.clubName)}</td>
+          <td>${escapeHtml(row.time)}</td>
+          <td>${escapeHtml(row.location)}</td>
+        </tr>`).join("")}
+      </tbody>
+    </table>`;
 }
 
 function renderPayment(body){
   body.innerHTML = `
     <div class="card" style="padding:24px 28px">
-      <h3 style="margin-top:0">繳費清單 Excel 匯出</h3>
-      <p class="muted">產生符合學校會計規格的 .xlsx 檔案：藍底標題、淡藍底已報名欄、橘底加粗合計欄、千分位數字格式。</p>
-      <div style="display:flex; gap:10px; margin-top:18px">
-        <button class="btn btn-primary" id="pay-115">匯出：115學年度課外社團</button>
-        <button class="btn btn-accent" id="pay-summer">匯出：暑假社團</button>
-        <button class="btn" style="background:var(--purple); color:#fff; border-color:var(--purple)" id="pay-grade1">匯出：小一社團</button>
-        <button class="btn" id="pay-all">匯出：全部（合併）</button>
+      <h3 style="margin-top:0">繳費單下載</h3>
+      <p class="muted">產生符合學校會計規格的 .xlsx 檔案：橫向格式，每個社團一欄。</p>
+      <div style="display:flex; gap:10px; margin-top:18px; flex-wrap:wrap">
+        <button class="btn btn-primary" id="pay-phase1">📊 第一階段匯出</button>
+        <button class="btn btn-primary" id="pay-phase2">📊 第二階段匯出</button>
+        <button class="btn" style="background:var(--purple); color:#fff; border-color:var(--purple)" id="pay-grade1">📊 小一匯出</button>
       </div>
 
+      <div class="divider"></div>
+      <h4 style="margin:0 0 8px">說明</h4>
+      <ul style="margin:0; padding-left:20px; line-height:1.8; color:#666; font-size:14px">
+        <li><strong>第一階段：</strong>115上學期 + 暑假社團（開學前報名）</li>
+        <li><strong>第二階段：</strong>115上學期社團（6/20-6/22 報名）</li>
+        <li><strong>小一：</strong>小一新生社團</li>
+      </ul>
+      
       <div class="divider"></div>
       <h4 style="margin:0 0 8px">預覽（115 學年度）</h4>
       <div id="pay-preview" style="max-height:50vh; overflow:auto; border:1px solid var(--line); border-radius:8px"></div>
     </div>`;
-  $("#pay-115").onclick = (e)=>exportPayment("115", e.currentTarget);
-  $("#pay-summer").onclick = (e)=>exportPayment("summer", e.currentTarget);
+  $("#pay-phase1").onclick = (e)=>exportPayment("phase1", e.currentTarget);
+  $("#pay-phase2").onclick = (e)=>exportPayment("phase2", e.currentTarget);
   $("#pay-grade1").onclick = (e)=>exportPayment("grade1", e.currentTarget);
-  $("#pay-all").onclick = (e)=>exportPayment("all", e.currentTarget);
   // preview
   const grid = buildPaymentGrid("115");
   $("#pay-preview").innerHTML = `
     <table class="tbl" style="font-size:12px">
-      <thead><tr>${grid.head.map((h,i)=>`<th style="background:#1a5fa8; color:#fff; ${i===grid.head.length-1?'background:#fce5cd; color:#1f2937':''}">${escapeHtml(h)}</th>`).join("")}</tr></thead>
+      <thead><tr>${grid.head.map((h,i)=>`<th style="background:#1a5fa8; color:#fff; ${i===4?'background:#fce5cd; color:#1f2937':''}">${escapeHtml(h)}</th>`).join("")}</tr></thead>
       <tbody>
         ${grid.rows.slice(0,30).map(r=>`<tr>${r.map((v,i)=>{
           if (i<4) return `<td>${escapeHtml(v||"")}</td>`;
-          if (i===r.length-1) return `<td class="num" style="background:#fce5cd; font-weight:700">${v?fmt$(v):"—"}</td>`;
+          if (i===4) return `<td class="num" style="background:#fce5cd; font-weight:700">${v?fmt$(v):"—"}</td>`;
           return `<td class="num" style="background:${v?'#e8f0fb':'transparent'}">${v?v.toLocaleString():"—"}</td>`;
         }).join("")}</tr>`).join("")}
       </tbody>
@@ -1693,53 +1826,189 @@ function buildPaymentGrid(category){
   const stus = Object.values(byStudent).sort((a,b)=>{
     const A=a[0],B=b[0]; return String(A.classNo).localeCompare(String(B.classNo)) || String(A.seatNo).localeCompare(String(B.seatNo));
   });
-  const head = ["序號","班級","座號","姓名", ...presentClubs.map(c=>c.name), "合計"];
+  const head = ["序號","班級","座號","姓名", "合計", ...presentClubs.map(c=>c.name)];
   const rows = stus.map((stu,i)=>{
     const r = stu[0];
     const map = {}; stu.forEach(x=>map[x.clubId]=x.totalFee);
     const fees = presentClubs.map(c => map[c.id] || "");
     const total = stu.reduce((s,x)=>s+x.totalFee,0);
-    return [i+1, r.classNo, r.seatNo, r.studentName, ...fees, total];
+    return [i+1, r.classNo, r.seatNo, r.studentName, total, ...fees];
   });
   return { head, rows, clubs:presentClubs };
 }
 
 async function exportPayment(category, btn){
-  const titleMap = { "115":"115學年度上學期 社團繳費清單", "summer":"114年度暑假社團 繳費清單", "grade1":"115學年度 小一社團 繳費清單", "all":"115學年度 社團繳費清單（總表）" };
-  const clubList = category==="all" ? allClubs() : CATEGORIES[category].data;
-  const clubs = clubList.map(c=>({ id:c.id, name:c.name }));
-
-  if (!API_URL){ alert("尚未設定後端 API_URL，無法產生伺服器端報表。"); return; }
+  const titleMap = { 
+    "115":"預算 (115 學年度)", 
+    "summer":"預算 (暑假社團)", 
+    "phase1":"預算 (第一階段)",
+    "phase2":"預算 (第二階段)",
+    "grade1":"預算 (小一社團)", 
+    "all":"預算 (全部社團)" 
+  };
+  const title = titleMap[category];
 
   const origText = btn ? btn.textContent : null;
   if (btn){ btn.disabled = true; btn.textContent = "產生中…"; }
   try {
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ action:"exportPayment", category, title:titleMap[category], clubs }),
-    });
-    const text = await res.text();
-    let json;
-    try { json = JSON.parse(text); }
-    catch { throw new Error("後端回傳非 JSON：" + text.slice(0,200)); }
-    if (!json.ok) throw new Error(json.error || "Export failed");
-    if (!json.base64 || typeof json.base64 !== "string"){
-      console.error("export response:", json);
-      throw new Error("後端未回傳 base64 檔案內容（請看 console）");
+    // 使用本地資料產生 Excel
+    let regs = state.registrations.slice();
+    
+    // 根據類別篩選
+    if (category === "phase1") {
+      // 第一階段：115上學期 + 暑假，且報名時間在 6/20 之前
+      regs = regs.filter(r => {
+        const regDate = new Date(r.createdAt);
+        const phase2Start = new Date('2025-06-20');
+        return (r.category === "115" || r.category === "summer") && regDate < phase2Start;
+      });
+    } else if (category === "phase2") {
+      // 第二階段：只有115上學期，且報名時間在 6/20-6/22
+      regs = regs.filter(r => {
+        const regDate = new Date(r.createdAt);
+        const phase2Start = new Date('2025-06-20');
+        const phase2End = new Date('2025-06-23');
+        return r.category === "115" && regDate >= phase2Start && regDate < phase2End;
+      });
+    } else if (category !== "all") {
+      regs = regs.filter(r => r.category === category);
     }
-    const bin = atob(json.base64);
-    const buf = new Uint8Array(bin.length);
-    for (let i=0; i<bin.length; i++) buf[i] = bin.charCodeAt(i);
-    const blob = new Blob([buf], { type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = json.filename || `雙蓮國小_${titleMap[category]}.xlsx`;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url), 1000);
+    
+    // 取得所有社團（暑假社團加上標記）
+    const clubSet = new Map(); // 使用 Map 保留類別資訊
+    regs.forEach(r => {
+      const clubLabel = r.category === "summer" ? `${r.clubName}(暑)` : r.clubName;
+      if (!clubSet.has(clubLabel)) {
+        clubSet.set(clubLabel, r.category);
+      }
+    });
+    // 排序：115上學期在前，暑假在後
+    const clubs = Array.from(clubSet.entries())
+      .sort((a, b) => {
+        if (a[1] === "summer" && b[1] !== "summer") return 1;
+        if (a[1] !== "summer" && b[1] === "summer") return -1;
+        return a[0].localeCompare(b[0]);
+      })
+      .map(([name]) => name);
+    
+    // 按學生分組
+    const studentMap = new Map();
+    regs.forEach(r => {
+      const key = `${r.classNo}-${r.seatNo}-${r.studentName}`;
+      if (!studentMap.has(key)) {
+        studentMap.set(key, {
+          classNo: r.classNo,
+          seatNo: r.seatNo,
+          studentName: r.studentName,
+          clubs: {}
+        });
+      }
+      const clubLabel = r.category === "summer" ? `${r.clubName}(暑)` : r.clubName;
+      studentMap.get(key).clubs[clubLabel] = r.totalFee;
+    });
+    
+    // 排序學生
+    const students = Array.from(studentMap.values()).sort((a,b)=> 
+      String(a.classNo).localeCompare(String(b.classNo)) || String(a.seatNo).localeCompare(String(b.seatNo))
+    );
+    
+    // 建立表格資料
+    const headers = ["序號", "班級", "座號", "姓名", "合計", ...clubs];
+    const wsData = [
+      [title],
+      [],
+      headers,
+      ...students.map((s, idx) => {
+        const total = Object.values(s.clubs).reduce((sum, v) => sum + (v || 0), 0);
+        return [
+          idx + 1,
+          s.classNo,
+          s.seatNo,
+          s.studentName,
+          total,
+          ...clubs.map(c => s.clubs[c] || "")
+        ];
+      })
+    ];
+    
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    
+    // 合併第一列標題
+    ws["!merges"] = [{ s:{r:0,c:0}, e:{r:0,c:headers.length-1} }];
+    
+    // 設定欄位寬度
+    ws["!cols"] = [
+      {wch: 6},  // 序號
+      {wch: 8},  // 班級
+      {wch: 6},  // 座號
+      {wch: 10}, // 姓名
+      {wch: 10}, // 合計
+      ...clubs.map(() => ({wch: 12})) // 各社團
+    ];
+    
+    // 設定儲存格樣式
+    const headerRow = 2; // 第三列（0-indexed）
+    const dataStartRow = 3;
+    
+    // 標題列樣式（藍底白字）
+    for (let c = 0; c < headers.length; c++) {
+      const cellAddr = XLSX.utils.encode_cell({r: headerRow, c});
+      if (!ws[cellAddr]) continue;
+      ws[cellAddr].s = {
+        fill: { fgColor: { rgb: "1a5fa8" } },
+        font: { color: { rgb: "FFFFFF" }, bold: true },
+        alignment: { horizontal: "center", vertical: "center" },
+        border: {
+          top: {style: "thin", color: {rgb: "000000"}},
+          bottom: {style: "thin", color: {rgb: "000000"}},
+          left: {style: "thin", color: {rgb: "000000"}},
+          right: {style: "thin", color: {rgb: "000000"}}
+        }
+      };
+      // 合計欄（第5欄，index=4）使用橘底
+      if (c === 4) {
+        ws[cellAddr].s.fill = { fgColor: { rgb: "fce5cd" } };
+        ws[cellAddr].s.font = { color: { rgb: "1f2937" }, bold: true };
+      }
+    }
+    
+    // 資料列樣式
+    for (let r = dataStartRow; r < dataStartRow + students.length; r++) {
+      for (let c = 0; c < headers.length; c++) {
+        const cellAddr = XLSX.utils.encode_cell({r, c});
+        if (!ws[cellAddr]) continue;
+        
+        // 基本樣式
+        ws[cellAddr].s = {
+          alignment: { horizontal: c < 4 ? "center" : "right", vertical: "center" },
+          border: {
+            top: {style: "thin", color: {rgb: "cccccc"}},
+            bottom: {style: "thin", color: {rgb: "cccccc"}},
+            left: {style: "thin", color: {rgb: "cccccc"}},
+            right: {style: "thin", color: {rgb: "cccccc"}}
+          }
+        };
+        
+        // 合計欄（橘底加粗）
+        if (c === 4) {
+          ws[cellAddr].s.fill = { fgColor: { rgb: "fce5cd" } };
+          ws[cellAddr].s.font = { bold: true };
+          ws[cellAddr].z = "#,##0"; // 千分位格式
+        }
+        // 社團欄位（有報名的淡藍底）
+        else if (c >= 5 && ws[cellAddr].v) {
+          ws[cellAddr].s.fill = { fgColor: { rgb: "e8f0fb" } };
+          ws[cellAddr].z = "#,##0"; // 千分位格式
+        }
+      }
+    }
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, title.slice(0,30));
+    XLSX.writeFile(wb, `雙蓮國小_${title}_${new Date().toISOString().slice(0,10)}.xlsx`);
   } catch(e){
     alert("匯出失敗：" + e.message);
+    console.error(e);
   } finally {
     if (btn){ btn.disabled = false; btn.textContent = origText; }
   }
