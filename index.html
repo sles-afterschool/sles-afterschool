@@ -807,14 +807,13 @@ function viewHome(){
     <div class="section-title"><h2>選擇報名類別</h2><span class="sub">請點擊您要報名的項目</span></div>
     <div class="entries">
       ${Object.entries(CATEGORIES).map(([k,c])=>{
-        const disabled = k==="grade1";
         return `
-        <article class="entry ${c.color}${disabled?' disabled':''}" ${disabled?'':`data-cat="${k}"`} ${disabled?'aria-disabled="true"':''} style="${disabled?'opacity:.5; cursor:not-allowed; pointer-events:none;':''}">
+        <article class="entry ${c.color}" data-cat="${k}">
           <div class="badge">${c.emoji}</div>
           <h3>${c.title}</h3>
           <div class="sub">${c.sub}</div>
           <div class="stat">
-            <div>${disabled?"尚未開放報名": k==="115"?"第一階段、第二階段報名": k==="summer"?"第一階段報名":"正式開課：9/7（一）～1/20（三）"}</div>
+            <div>${k==="115"?"第一階段、第二階段報名": k==="summer"?"第一階段報名":"正式開課：9/7（一）～1/20（三）"}</div>
           </div>
           <div class="arrow">→</div>
         </article>`;}).join("")}
