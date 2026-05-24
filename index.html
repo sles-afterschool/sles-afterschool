@@ -771,12 +771,12 @@ function viewHome(){
       ${Object.entries(CATEGORIES).map(([k,c])=>{
         const disabled = c.disabled || false;
         return `
-        <article class="entry ${c.color}" data-cat="${k}">
+        <article class="entry ${c.color}${disabled?' disabled':''}" ${disabled?'':`data-cat="${k}"`} ${disabled?'aria-disabled="true"':''} style="${disabled?'opacity:.5; cursor:not-allowed; pointer-events:none;':''}">
           <div class="badge">${c.emoji}</div>
           <h3>${c.title}</h3>
           <div class="sub">${c.sub}</div>
           <div class="stat">
-            <div>${k==="115"?"第一階段、第二階段報名": k==="summer"?"第一階段報名":"正式開課：9/7（一）～1/20（三）"}</div>
+            <div>${disabled?(c.disabledMsg||"尚未開放報名"): k==="115"?"第一階段、第二階段報名": k==="summer"?"第一階段報名":"正式開課：9/7（一）～1/20（三）"}</div>
           </div>
           <div class="arrow">→</div>
         </article>`;}).join("")}
@@ -893,7 +893,7 @@ function renderClubGrid(){
           <div class="bar"><i style="width:${pct}%"></i></div>
           <span>${taken}/${c.spots}</span>
         </div>
-        <button class="btn btn-sm btn-primary" data-pick="${c.id}">我要報名</button>
+        <button class="btn btn-sm" disabled style="cursor:not-allowed; opacity:.5">報名尚未開放</button>
       </div>
     </article>`;
   }).join("")}</div>`;
