@@ -893,7 +893,7 @@ function renderClubGrid(){
           <div class="bar"><i style="width:${pct}%"></i></div>
           <span>${taken}/${c.spots}</span>
         </div>
-        <button class="btn btn-sm" disabled style="cursor:not-allowed; opacity:.5">報名尚未開放</button>
+         <button class="btn btn-primary btn-sm" data-pick="${c.id}">我要報名 →</button>
       </div>
     </article>`;
   }).join("")}</div>`;
