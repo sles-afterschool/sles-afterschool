@@ -1214,7 +1214,7 @@ function afterMy(){
     const matches = state.registrations.filter(r =>
       String(r.studentName).trim() === name &&
       String(r.classNo).trim() === cls &&
-      String(r.seatNo).trim() === seatNorm &&
+      String(r.seatNo).trim().padStart(2,"0") === seatNorm &&
       String(r.email||"").trim().toLowerCase() === email
     );
     const out = $("#my-result");
