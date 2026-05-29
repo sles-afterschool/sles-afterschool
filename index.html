@@ -1862,22 +1862,32 @@ async function exportPayment(category, btn){
   if (btn){ btn.disabled = true; btn.textContent = "產生中…"; }
   try {
     // 使用本地資料產生 Excel
-    let regs = state.registrations.slice();
-    
+    const inferCat = (id)=>{
+      const s = String(id||"");
+      if (s.startsWith("SUM")) return "summer";
+      if (s.startsWith("G1"))  return "grade1";
+      return "115";
+    };
+    // 補上類別（舊資料 category 欄可能為空，與預覽 buildPaymentGrid 一致）
+    let regs = state.registrations.map(r => ({
+      ...r,
+      category: (r.category && String(r.category).trim()) || inferCat(r.clubId),
+    }));
+
     // 根據類別篩選
     if (category === "phase1") {
-      // 第一階段：115上學期 + 暑假，且報名時間在 6/20 之前
+      // 第一階段：115上學期 + 暑假，且報名時間在第二階段開始（6/20）之前
+      const phase2Start = new Date('2026-06-20');
       regs = regs.filter(r => {
-        const regDate = new Date(r.createdAt);
-        const phase2Start = new Date('2025-06-20');
+        const regDate = new Date(r.timestamp);
         return (r.category === "115" || r.category === "summer") && regDate < phase2Start;
       });
     } else if (category === "phase2") {
       // 第二階段：只有115上學期，且報名時間在 6/20-6/22
+      const phase2Start = new Date('2026-06-20');
+      const phase2End = new Date('2026-06-23');
       regs = regs.filter(r => {
-        const regDate = new Date(r.createdAt);
-        const phase2Start = new Date('2025-06-20');
-        const phase2End = new Date('2025-06-23');
+        const regDate = new Date(r.timestamp);
         return r.category === "115" && regDate >= phase2Start && regDate < phase2End;
       });
     } else if (category !== "all") {
