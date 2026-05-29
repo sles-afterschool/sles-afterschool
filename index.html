@@ -681,13 +681,13 @@ async function fetchRemoteRegs(){
     return null;
   }
 }
-async function deleteRemoteReg(id){
+async function deleteRemoteReg(id, clubId){
   if (!API_URL) return { ok:true, skipped:true };
   try {
     const res = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ action:"delete", id }),
+      body: JSON.stringify({ action:"delete", id, clubId }),
     });
     return await res.json();
   } catch(e){
@@ -1098,6 +1098,15 @@ function afterConfirm(){
     const btn = $("#submitFinal");
     const club = state.selectedClub;
     const f = state.formData;
+    // Re-sync registrations with the sheet so concurrent submissions don't slip past.
+    btn.disabled = true; btn.textContent = "檢查中…";
+    const fresh = await fetchRemoteRegs();
+    btn.disabled = false; btn.textContent = "✓ 確認送出報名";
+    if (!fresh){
+      alert("無法連線伺服器，請檢查網路後重試。");
+      return;
+    }
+    state.registrations = fresh; saveRegs();
     // duplicate-time conflict check (single category only)
     const dupTime = state.registrations.find(r=>{
       if (r.classNo!==f.classNo || r.seatNo!==f.seatNo || r.studentName!==f.studentName) return false;
@@ -1235,7 +1244,7 @@ function afterMy(){
               <td class="num">${fmt$(r.totalFee)}</td>
               <td><span class="badge ${r.status==='paid'?'paid':'pending'}">${r.status==='paid'?'已繳費':'待繳費'}</span></td>
               <td>${canDelete
-                ? `<button class="btn btn-sm" data-mydel="${r.id}" style="color:var(--danger)">刪除</button>`
+                ? `<button class="btn btn-sm" data-mydel="${r.id}" data-myclub="${r.clubId}" style="color:var(--danger)">刪除</button>`
                 : `<span class="muted" style="font-size:12px">已繳費，請聯絡訓育組</span>`}</td>
             </tr>`;
           }).join("")}</tbody>
@@ -1243,16 +1252,17 @@ function afterMy(){
       </div>`;
     $$("[data-mydel]").forEach(b=>b.onclick=async e=>{
       const id = e.currentTarget.dataset.mydel;
+      const clubId = e.currentTarget.dataset.myclub;
       if (!confirm("確定刪除此筆報名？此動作無法復原。")) return;
       const btn = e.currentTarget;
       btn.disabled = true; btn.textContent = "刪除中…";
-      const result = await deleteRemoteReg(id);
+      const result = await deleteRemoteReg(id, clubId);
       if (!result.ok){
         btn.disabled = false; btn.textContent = "刪除";
-        alert("刪除失敗，請稍後再試。\n" + (result.error||""));
+        alert("刪除失敗：" + (result.error || "未知錯誤，請稍後再試。"));
         return;
       }
-      state.registrations = state.registrations.filter(x=>x.id!==id);
+      state.registrations = state.registrations.filter(x=>!(x.id===id && x.clubId===clubId));
       saveRegs();
       runSearch();
     });
