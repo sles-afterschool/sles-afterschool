@@ -1079,6 +1079,22 @@ function afterForm(){
   $("#form-back").onclick = ()=>go("list");
   $("#form-next").onclick = submitForm;
 }
+function gradeFromClass(classNo){
+  // 班級如「101」「605」，首位數字即年級
+  const m = String(classNo||"").match(/\d/);
+  return m ? parseInt(m[0],10) : null;
+}
+function gradeAllowed(club, classNo){
+  const g = gradeFromClass(classNo);
+  if (g==null || !club) return true; // 無法判定年級則不擋
+  const spec = String(club.grade||"");
+  if (spec.indexOf("小一")>=0) return g===1;            // 小一新生
+  const range = spec.match(/(\d)\s*[-~]\s*(\d)/);        // 如「1-5年級」
+  if (range) return g>=+range[1] && g<=+range[2];
+  const single = spec.match(/(\d)\s*年級/);              // 如「1年級」
+  if (single) return g===+single[1];
+  return true;
+}
 function submitForm(){
   const f = {
     classNo: $("#f-class").value,
@@ -1099,6 +1115,12 @@ function submitForm(){
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)){ $("#f-email").parentElement.classList.add("bad"); bad=true; }
   if (!f.agree1){ alert("請勾選注意事項確認"); bad=true; }
   if (bad) { window.scrollTo({top:0, behavior:"smooth"}); return; }
+  if (!gradeAllowed(state.selectedClub, f.classNo)){
+    alert(`報名失敗：此社團招生條件為「${state.selectedClub.grade}」，您選擇的班級（${f.classNo}）年級不符合資格，無法報名。`);
+    $("#f-class").parentElement.classList.add("bad");
+    window.scrollTo({top:0, behavior:"smooth"});
+    return;
+  }
   state.formData = f;
   go("confirm");
 }
