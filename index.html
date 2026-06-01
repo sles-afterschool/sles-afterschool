@@ -1916,7 +1916,15 @@ function buildPaymentGrid(category){
   let pool = state.registrations.slice().map(r => ({
     ...r,
     category: (r.category && String(r.category).trim()) || inferCat(r.clubId),
-  })).filter(r=>!["115-44","SUM-17"].includes(r.clubId));
+  })).filter(r=>{
+    if(["115-44","SUM-17"].includes(r.clubId)) return false;
+    var match=ADMIT_D.find(function(d){
+      return d[6]===String(r.studentName).trim()&&d[4]===String(r.classNo).trim()&&d[3]===String(r.clubName).trim();
+    });
+    if(!match) return true; // 查無錄取資料則保留
+    var res=match[7];
+    return res.indexOf("\u274c")< 0&&res.indexOf("\u26ab")<0&&res!=="\u53d6\u6d88";
+  });
   let clubList;
   if (category==="all") clubList = allClubs();
   else { pool = pool.filter(r=>r.category===category); clubList = CATEGORIES[category].data; }
@@ -1963,7 +1971,15 @@ async function exportPayment(category, btn){
     let regs = state.registrations.map(r => ({
       ...r,
       category: (r.category && String(r.category).trim()) || inferCat(r.clubId),
-    })).filter(r=>!["115-44","SUM-17"].includes(r.clubId));
+    })).filter(r=>{
+      if(["115-44","SUM-17"].includes(r.clubId)) return false;
+      var match=ADMIT_D.find(function(d){
+        return d[6]===String(r.studentName).trim()&&d[4]===String(r.classNo).trim()&&d[3]===String(r.clubName).trim();
+      });
+      if(!match) return true;
+      var res=match[7];
+      return res.indexOf("\u274c")<0&&res.indexOf("\u26ab")<0&&res!=="\u53d6\u6d88";
+    });
 
     // 根據類別篩選
     if (category === "phase1") {
