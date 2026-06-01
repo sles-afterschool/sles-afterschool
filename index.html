@@ -1916,7 +1916,7 @@ function buildPaymentGrid(category){
   let pool = state.registrations.slice().map(r => ({
     ...r,
     category: (r.category && String(r.category).trim()) || inferCat(r.clubId),
-  }));
+  })).filter(r=>!["115-44","SUM-17"].includes(r.clubId));
   let clubList;
   if (category==="all") clubList = allClubs();
   else { pool = pool.filter(r=>r.category===category); clubList = CATEGORIES[category].data; }
@@ -1963,7 +1963,7 @@ async function exportPayment(category, btn){
     let regs = state.registrations.map(r => ({
       ...r,
       category: (r.category && String(r.category).trim()) || inferCat(r.clubId),
-    }));
+    })).filter(r=>!["115-44","SUM-17"].includes(r.clubId));
 
     // 根據類別篩選
     if (category === "phase1") {
