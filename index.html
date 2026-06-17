@@ -640,6 +640,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwVdp5T-eP-iH_P2IUJmcB2
 const state = {
   view:"home",
   category:"115",
+  stage:1,
   filterDay:"全部",
   filterType:"all",
   search:"",
@@ -723,8 +724,8 @@ function afterResult(){
     var ok=hits.filter(function(d){return d[7].indexOf("✅")>=0}).length;
     var so=[].concat(hits).sort(function(a,b){var o={ok:0,okold:0,wl:1,st:2,iv:3,no:4};return(o[gcR(a[7])]||5)-(o[gcR(b[7])]||5)});
     var catL={"115":"115上","summer":"暑假"};
-    var h='<div class="table-wrap" style="margin-top:14px"><div style="font-size:14px;color:var(--muted);margin-bottom:8px">'+escapeHtml(nm)+"（"+escapeHtml(cl)+"班）</div>";
-    h+='<table class="tbl"><thead><tr><th>類別</th><th>DAY</th><th>TIME</th><th>社團</th><th>錄取結果</th></tr></thead><tbody>';
+    var h='<div class="table-wrap" style="margin-top:14px;overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="font-size:14px;color:var(--muted);margin-bottom:8px">'+escapeHtml(nm)+"（"+escapeHtml(cl)+"班）</div>";
+    h+='<table class="tbl" style="min-width:460px"><thead><tr><th>類別</th><th>DAY</th><th>TIME</th><th>社團</th><th>錄取結果</th></tr></thead><tbody>';
     so.forEach(function(d){var cat=d[3]==="管樂團"?"管樂團":(catL[d[0]]||d[0]);h+="<tr><td>"+escapeHtml(cat)+"</td><td>"+escapeHtml(d[1])+"</td><td>"+escapeHtml(d[2])+"</td><td>"+escapeHtml(d[3])+"</td><td>"+gbR(d[7])+"</td></tr>";});
     h+="</tbody></table></div>";out.innerHTML=h;
   }
@@ -774,9 +775,14 @@ const fmt$ = n => "NT$ " + (n||0).toLocaleString("en-US");
 const allClubs = ()=>[...clubs_115,...clubs_summer,...clubs_grade1];
 function findClub(id){ return allClubs().find(c=>c.id===id); }
 function spotsTaken(clubId){ return state.registrations.filter(r=>r.clubId===clubId).length; }
-function nextRegId(category){
-  const code = CATEGORIES[category].code;
-  const n = state.registrations.filter(r=>r.category===category).length + 1;
+function nextRegId(category, stage=1){
+  // 115 第一階段 → A、第二階段 → B；其他類別維持原 code
+  const is115S2 = category==="115" && stage===2;
+  const code = is115S2 ? "B" : CATEGORIES[category].code;
+  const n = state.registrations.filter(r=>{
+    if (r.category!==category) return false;
+    return category==="115" ? (r.stage||1)===stage : true;
+  }).length + 1;
   return `115${code}-${String(n).padStart(4,"0")}`;
 }
 function escapeHtml(s){ return String(s||"").replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;" }[c])); }
@@ -833,18 +839,40 @@ function viewHome(){
 
     <div class="section-title"><h2>選擇報名類別</h2><span class="sub">請點擊您要報名的項目</span></div>
     <div class="entries">
-      ${Object.entries(CATEGORIES).map(([k,c])=>{
-        const disabled = c.disabled || false;
-        return `
-        <article class="entry ${c.color}${disabled?' disabled':''}" ${disabled?'':`data-cat="${k}"`} ${disabled?'aria-disabled="true"':''} style="${disabled?'opacity:.5; cursor:not-allowed; pointer-events:none;':''}">
-          <div class="badge">${c.emoji}</div>
-          <h3>${c.title}</h3>
-          <div class="sub">${c.sub}</div>
-          <div class="stat">
-            <div>${disabled?(c.disabledMsg||"尚未開放報名"): k==="115"?"第一階段、第二階段報名": k==="summer"?"第一階段報名":"正式開課：9/7（一）～1/20（三）"}</div>
-          </div>
-          <div class="arrow">→</div>
-        </article>`;}).join("")}
+      ${(()=>{
+        // Build the home entry list. The 115 programme has two registration stages;
+        // the second stage is shown as its own entry but reuses category "115" with stage:2.
+        const entries = [];
+        Object.entries(CATEGORIES).forEach(([k,c])=>{
+          const stat = c.disabled ? (c.disabledMsg||"尚未開放報名")
+            : k==="115" ? "第一階段報名"
+            : k==="summer" ? "第一階段報名"
+            : "正式開課：9/7（一）～1/20（三）";
+          entries.push({ k, c, stage:1, stat });
+          if (k==="115"){
+            entries.push({
+              k:"115", c, stage:2,
+              title:"115上第二階段報名",
+              sub:"報名期間：6/20（六）8:00～6/22（一）23:59",
+              emoji:"📝",
+              stat:"第二階段報名",
+            });
+          }
+        });
+        return entries.map(({k,c,stage,stat,title,sub,emoji})=>{
+          const disabled = c.disabled || false;
+          return `
+          <article class="entry ${c.color}${disabled?' disabled':''}" ${disabled?'':`data-cat="${k}" data-stage="${stage}"`} ${disabled?'aria-disabled="true"':''} style="${disabled?'opacity:.5; cursor:not-allowed; pointer-events:none;':''}">
+            <div class="badge">${emoji||c.emoji}</div>
+            <h3>${title||c.title}</h3>
+            <div class="sub">${sub||c.sub}</div>
+            <div class="stat">
+              <div>${stat}</div>
+            </div>
+            <div class="arrow">→</div>
+          </article>`;
+        }).join("");
+      })()}
     </div>
 
     <div class="section-title"><h2>報名時程表</h2></div>
@@ -877,7 +905,7 @@ function viewHome(){
 }
 function afterHome(){
   $$(".entry").forEach(el=>el.addEventListener("click", ()=>{
-    go("list", { category: el.dataset.cat, filterDay:"全部", filterType:"all", search:"" });
+    go("list", { category: el.dataset.cat, stage: Number(el.dataset.stage)||1, filterDay:"全部", filterType:"all", search:"" });
   }));
 }
 
@@ -892,7 +920,7 @@ function viewList(){
     <div style="display:flex; gap:10px; align-items:center; margin-bottom:14px">
       <button class="btn btn-ghost" id="back2home">← 回首頁</button>
       <span class="muted">/</span>
-      <span style="font-weight:600">${cat.title}</span>
+      <span style="font-weight:600">${cat.title}${state.stage===2?"（第二階段）":""}</span>
     </div>
 
     ${cat.pdf ? `<div style="margin-bottom:14px"><a class="btn btn-ghost" href="${encodeURI(cat.pdf)}" target="_blank" rel="noopener" download><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:6px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>下載招生簡章 PDF</a></div>` : ""}
@@ -929,6 +957,7 @@ function renderClubGrid(){
     grid.innerHTML = `<div class="empty"><div class="ico">🔍</div>找不到符合條件的社團，請調整篩選。</div>`;
     return;
   }
+  const regOpen = false; // 第二階段報名尚未開放（改為 state.stage===2 即開放測試）
   grid.innerHTML = `<div class="club-grid">${list.map(c=>{
     const taken = spotsTaken(c.id);
     const remain = Math.max(0, c.spots - taken);
@@ -958,7 +987,7 @@ function renderClubGrid(){
           <div class="bar"><i style="width:${pct}%"></i></div>
           <span>${taken}/${c.spots}</span>
         </div>
-        <button class="btn btn-sm" disabled style="cursor:not-allowed; opacity:.5">報名截止</button>
+        <button class="btn btn-sm${regOpen&&!full?" btn-primary":""}" ${regOpen&&!full?`data-pick="${c.id}"`:`disabled style="cursor:not-allowed; opacity:.5"`}>${full?"額滿":regOpen?"報名":"報名尚未開放"}</button>
       </div>
     </article>`;
   }).join("")}</div>`;
@@ -1220,8 +1249,9 @@ function afterConfirm(){
       }
     }
     const reg = {
-      id: nextRegId(state.category),
+      id: nextRegId(state.category, state.stage),
       category: state.category,
+      stage: state.stage || 1,
       clubId: club.id, clubName: club.name,
       classNo: f.classNo, seatNo: f.seatNo, studentName: f.studentName,
       contactName: f.contactName, contactPhone: f.contactPhone, email: f.email,
