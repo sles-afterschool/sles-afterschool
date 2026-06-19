@@ -311,7 +311,7 @@ const clubs_115=[
   {id:"115-14",day:"週二",time:"16:00~17:30",name:"籃球社周二班",grade:"3-5年級",teacher:"洪嘉星",location:"操場（雨備:一樓走廊）",tuition:2143,material:150,total:2293,sessions:20,spots:8,note:"另收材料費150元。",type:"sport"},
   {id:"115-15",day:"週三",time:"13:30~15:10",name:"Scratch小小遊戲設計師",grade:"1-5年級",teacher:"吳宇凱",location:"一棟三樓特色教室",tuition:2024,material:1940,total:3964,sessions:17,spots:1,note:"另收材料費1,940元（含教材USB）。",type:"art"},
   {id:"115-16",day:"週三",time:"13:40~15:10",name:"足球社週三（基礎班）",grade:"1-3年級",teacher:"戴翊昀",location:"操場（雨天:聯絡走廊）",tuition:2226,material:0,total:2226,sessions:17,spots:0,note:"自備足球或請教練協助購買。",type:"sport"},
-  {id:"115-17",day:"週三",time:"13:40~15:10",name:"足球社週三（進階班）",grade:"2-5年級",teacher:"蔡秉祐",location:"操場（雨天:聯絡走廊）",tuition:2226,material:0,total:2226,sessions:17,spots:2,note:"自備足球或請教練協助購買。",type:"sport"},
+  {id:"115-17",day:"週三",time:"13:40~15:10",name:"足球社週三（進階班）",grade:"2-5年級",teacher:"蔡秉祐",location:"操場（雨天:聯絡走廊）",tuition:2226,material:0,total:2226,sessions:17,spots:0,note:"自備足球或請教練協助購買。",type:"sport"},
   {id:"115-18",day:"週三",time:"13:40~15:10",name:"兒童街舞C（初階）",grade:"1-5年級",teacher:"歐怡君",location:"331韻律教室",tuition:3036,material:0,total:3036,sessions:17,spots:0,note:"超過人數由電腦抽籤。11/11停課。",type:"sport"},
   {id:"115-19",day:"週三",time:"14:30~16:00",name:"游泳社週三班",grade:"1-5年級",teacher:"高子惟、邱威連",location:"游泳池",tuition:3279,material:100,total:3379,sessions:17,spots:18,note:"自備泳具。",type:"sport"},
   {id:"115-20",day:"週三",time:"15:10~16:40",name:"兒童街舞B（中階）",grade:"2-5年級",teacher:"歐怡君",location:"331韻律教室",tuition:3036,material:0,total:3036,sessions:17,spots:0,note:"以舊生優先錄取。超過人數由電腦抽籤。11/11停課",type:"sport"},
@@ -440,7 +440,8 @@ const $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const fmt$=n=>"NT$ "+(n||0).toLocaleString("en-US");
 const allClubs=()=>[...clubs_115,...clubs_summer,...clubs_grade1];
 function findClub(id){return allClubs().find(c=>c.id===id);}
-function spotsTaken(clubId){return state.registrations.filter(r=>r.clubId===clubId).length;}
+function spotsTaken(clubId){return state.registrations.filter(r=>r.clubId===clubId&&(r.stage||1)===2).length;}
+function spotsTakenAll(clubId){return state.registrations.filter(r=>r.clubId===clubId).length;}
 function nextRegId(category,stage=1){
   const is115S2=category==="115"&&stage===2;
   const code=is115S2?"B":CATEGORIES[category].code;
@@ -573,7 +574,7 @@ function renderClubGrid(){
     list=list.filter(c=>(c.name+c.teacher+c.location).toLowerCase().includes(q));
   }
   /* ★ PATCH 2 & 3: 第二階段開放報名，且只顯示未額滿的社團 */
-  const regOpen=false;
+  const regOpen=true;
   if(state.stage===2){
     list=list.filter(c=>spotsTaken(c.id)<c.spots);
   }
@@ -609,7 +610,7 @@ function renderClubGrid(){
           <div class="bar"><i style="width:${pct}%"></i></div>
           <span>${taken}/${c.spots}</span>
         </div>
-
+        <button class="btn btn-sm btn-primary" data-pick="${c.id}">立即報名</button>
       </div>
     </article>`;
   }).join("")}</div>`;
@@ -891,7 +892,7 @@ function renderDashboard(body){
   body.innerHTML=`<div class="kpi-row"><div class="kpi"><div class="lbl">總報名筆數</div><div class="val">${all.length}</div><div class="sub">含三類社團</div></div><div class="kpi"><div class="lbl">不重複學生</div><div class="val">${uniqStudents}</div><div class="sub">已參與報名</div></div><div class="kpi"><div class="lbl">已繳費</div><div class="val">${paidCount}</div><div class="sub">/ ${all.length} 筆</div></div><div class="kpi"><div class="lbl">應收金額</div><div class="val">${(totalRevenue/1000).toFixed(1)}k</div><div class="sub">${fmt$(totalRevenue)}</div></div></div><div class="chart-grid"><div class="chart-card full"><h3>各社團報名人數 vs 名額</h3><canvas id="ch1"></canvas></div><div class="chart-card"><h3>各星期報名人數分佈</h3><canvas id="ch2"></canvas></div><div class="chart-card"><h3>每日新增報名</h3><canvas id="ch3"></canvas></div></div>`;
   const ctx1=$("#ch1").getContext("2d");
   const labels=clubs_115.map(c=>c.name);
-  const taken=clubs_115.map(c=>spotsTaken(c.id));
+  const taken=clubs_115.map(c=>spotsTakenAll(c.id));
   const remain=clubs_115.map((c,i)=>Math.max(0,c.spots-taken[i]));
   new Chart(ctx1,{type:"bar",data:{labels,datasets:[{label:"已報名",data:taken,backgroundColor:"#1a5fa8",stack:"a"},{label:"剩餘名額",data:remain,backgroundColor:"#cfd8e3",stack:"a"}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true,ticks:{font:{size:11}}},y:{stacked:true,ticks:{font:{size:10}}}},plugins:{legend:{position:"bottom"}}}});
   $("#ch1").parentElement.style.height="560px";
@@ -916,7 +917,7 @@ function renderRegs(body){
   refresh();
 }
 function renderRoster(body){
-  body.innerHTML=`<div class="card" style="padding:24px 28px"><h3 style="margin-top:0">各社團點名表列印</h3><p class="muted">A4 橫式，一個社團一張。</p><div style="display:flex;gap:10px;margin-top:18px;align-items:center"><select id="rs-club" class="btn btn-sm" style="padding:6px 10px;min-width:280px"><option value="all">全部社團一次列印</option>${clubs_115.map(c=>`<option value="${c.id}">${c.day} ${c.time} ・ ${c.name}（${spotsTaken(c.id)}人）</option>`).join("")}</select><button class="btn btn-sm" id="rs-preview">預覽</button><button class="btn btn-primary btn-sm" id="rs-print">🖨 列印 / 存 PDF</button></div><div class="divider"></div><h4 style="margin:0 0 8px">預覽</h4><div id="rs-preview-area" style="max-height:60vh;overflow:auto;border:1px solid var(--line);border-radius:8px;background:#f5f5f5;padding:20px"></div></div>`;
+  body.innerHTML=`<div class="card" style="padding:24px 28px"><h3 style="margin-top:0">各社團點名表列印</h3><p class="muted">A4 橫式，一個社團一張。</p><div style="display:flex;gap:10px;margin-top:18px;align-items:center"><select id="rs-club" class="btn btn-sm" style="padding:6px 10px;min-width:280px"><option value="all">全部社團一次列印</option>${clubs_115.map(c=>`<option value="${c.id}">${c.day} ${c.time} ・ ${c.name}（${spotsTakenAll(c.id)}人）</option>`).join("")}</select><button class="btn btn-sm" id="rs-preview">預覽</button><button class="btn btn-primary btn-sm" id="rs-print">🖨 列印 / 存 PDF</button></div><div class="divider"></div><h4 style="margin:0 0 8px">預覽</h4><div id="rs-preview-area" style="max-height:60vh;overflow:auto;border:1px solid var(--line);border-radius:8px;background:#f5f5f5;padding:20px"></div></div>`;
   const CLASS_S={週一:["9/8","9/15","9/22","9/29","10/6","10/13","10/20","10/27","11/3","11/10","11/17","11/24","12/1","12/8","12/15","12/22","1/5","1/12","1/19"],週二:["9/9","9/16","9/23","9/30","10/7","10/14","10/21","10/28","11/4","11/11","11/18","11/25","12/2","12/9","12/16","12/23","12/30","1/6","1/13","1/20"],週三:["9/10","9/17","9/24","10/1","10/8","10/15","10/22","10/29","11/5","11/12","11/19","11/26","12/3","12/10","12/17","12/24","12/31","1/7","1/14","1/21"],週四:["9/11","9/18","9/25","10/2","10/9","10/16","10/23","10/30","11/6","11/13","11/20","11/27","12/4","12/11","12/18","12/25","1/1","1/8","1/15","1/22"],週五:["9/12","9/19","9/26","10/3","10/10","10/17","10/24","10/31","11/7","11/14","11/21","11/28","12/5","12/12","12/19","12/26","1/2","1/9","1/16","1/23"]};
   function buildSheet(clubId){
     const clubIds=clubId==="all"?clubs_115.map(c=>c.id):[clubId];
