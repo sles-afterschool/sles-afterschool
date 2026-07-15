@@ -508,6 +508,8 @@ function viewHome(){
           }
           entries.push({k,c,stage:1,stat});
         });
+        const g1i=entries.findIndex(e=>e.k==="grade1");
+        if(g1i>0)entries.unshift(entries.splice(g1i,1)[0]);
         return entries.map(({k,c,stage,stat,title,sub,emoji,disabled:entryDisabled,disabledMsg:entryDisabledMsg})=>{
           /* ★ PATCH 1: 第一階段 115上 & 暑假 → disabled */
           const isPhase1=stage===1&&(k==="115"||k==="summer");
