@@ -498,7 +498,7 @@ function viewHome(){
       ${(()=>{
         const entries=[];
         Object.entries(CATEGORIES).forEach(([k,c])=>{
-          const stat=c.disabled?(c.disabledMsg||"尚未開放報名"):k==="115"?"第一階段報名":k==="summer"?"第一階段報名":"正式開課：9/7（一）～1/20（三）";
+          const stat=c.disabled?(c.disabledMsg||"尚未開放報名"):k==="115"?"第一階段報名":k==="summer"?"第一階段報名":k==="grade1"?"":"正式開課：9/7（一）～1/20（三）";
           if(k==="115"){
             entries.unshift({k:"115",c,stage:2,title:"115上第二階段課外社團",sub:"報名期間：6/20（六）8:00～6/22（一）23:59",emoji:"📝",stat:"第二階段報名已截止",disabled:true,disabledMsg:"第二階段報名已截止"});
           }
