@@ -616,7 +616,7 @@ function renderClubGrid(){
           <div class="bar"><i style="width:${pct}%"></i></div>
           <span>${taken}/${c.spots}</span>
         </div>`}
-        ${state.category==="summer"?'<span style="font-size:12px;color:var(--ink-mute);text-align:right;line-height:1.4">請至學務處<br>現場報名繳費</span>':state.category==="grade1"?'<span style="font-size:12px;color:var(--ink-mute);text-align:right;line-height:1.4">尚未開放<br>報名</span>':'<button class="btn btn-sm btn-primary" data-pick="'+c.id+'">立即報名</button>'}
+        ${state.category==="summer"?'<span style="font-size:12px;color:var(--ink-mute);text-align:right;line-height:1.4">請至學務處<br>現場報名繳費</span>':'<button class="btn btn-sm btn-primary" data-pick="'+c.id+'">立即報名</button>'}
       </div>
     </article>`;
   }).join("")}</div>`;
