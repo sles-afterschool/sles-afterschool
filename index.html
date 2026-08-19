@@ -641,11 +641,11 @@ function viewForm(){
     ${stepsHtml(2)}
     <div class="section-title"><h2>步驟 2 ・ 填寫報名表單</h2><span class="sub">${escapeHtml(club.name)}</span></div>
     <div class="card form-card">
-      <div class="warn-box"><div class="ico">⚠️</div><div><strong>請填寫 114 學年度（現在）的班級與座號</strong><br>升上 115 學年度後班級座號可能異動，本次報名請填寫目前就讀之班級座號。</div></div>
+      <div class="warn-box"><div class="ico">⚠️</div><div><strong>${state.category==="grade1"?"請填寫 115 學年度小一班級、座號、姓名":"請填寫 114 學年度（現在）的班級與座號"}</strong><br>${state.category==="grade1"?"":"升上 115 學年度後班級座號可能異動，本次報名請填寫目前就讀之班級座號。"}</div></div>
       <div class="fset"><h4>學生資料</h4>
         <div class="frow">
-          <div class="field"><label>班級<span class="req">*</span></label><select id="f-class"><option value="">— 請選擇 —</option>${classOptions(state.category,fd.classNo||"")}</select><div class="hint">請選擇 114 學年度現在的班級</div></div>
-          <div class="field"><label>座號<span class="req">*</span></label><select id="f-seat"><option value="">— 請選擇 —</option>${(state.category==="grade1"?[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,21,22,23,24,25,26,27,28,29,30,31,32,33,34]:Array.from({length:40},(_,i)=>i+1)).map(n=>{const v=String(n).padStart(2,"0");return`<option ${fd.seatNo===v?"selected":""} value="${v}">${v}</option>`;}).join("")}</select><div class="hint">請選擇 114 學年度現在的座號</div></div>
+          <div class="field"><label>班級<span class="req">*</span></label><select id="f-class"><option value="">— 請選擇 —</option>${classOptions(state.category,fd.classNo||"")}</select><div class="hint">${state.category==="grade1"?"請選擇 115 學年度小一班級":"請選擇 114 學年度現在的班級"}</div></div>
+          <div class="field"><label>座號<span class="req">*</span></label><select id="f-seat"><option value="">— 請選擇 —</option>${(state.category==="grade1"?[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,21,22,23,24,25,26,27,28,29,30,31,32,33,34]:Array.from({length:40},(_,i)=>i+1)).map(n=>{const v=String(n).padStart(2,"0");return`<option ${fd.seatNo===v?"selected":""} value="${v}">${v}</option>`;}).join("")}</select><div class="hint">${state.category==="grade1"?"請選擇 115 學年度小一座號":"請選擇 114 學年度現在的座號"}</div></div>
           <div class="field full"><label>學生姓名<span class="req">*</span></label><input id="f-student" type="text" placeholder="如：王小明" value="${escapeHtml(fd.studentName||"")}"></div>
         </div>
       </div>
@@ -758,7 +758,7 @@ function afterConfirm(){
 /* ── DONE ── */
 function viewDone(){
   const r=state.myReg,club=findClub(r.clubId);
-  const deadline=state.stage===2?"6/30（二）繳費截止日":"6/8（一）繳費截止日";
+  const deadline="9/14（一）～9/16（三）繳費期間";
   return`
   <div class="view">
     ${stepsHtml(4)}
